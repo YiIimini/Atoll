@@ -354,8 +354,14 @@ struct ProcessRowView: View {
     var body: some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.name).font(.system(size: 13, weight: .medium)).foregroundColor(.primary).lineLimit(1)
-                Text(entry.user).font(.system(size: 10)).foregroundColor(.secondary)
+                HStack(spacing: 6) {
+                    Image(systemName: entry.categoryIcon)
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                        .frame(width: 14)
+                    Text(entry.displayDescription).font(.system(size: 13, weight: .medium)).foregroundColor(.primary).lineLimit(1)
+                }
+                Text("PID \(entry.pid) · \(entry.user)").font(.system(size: 10)).foregroundColor(.secondary)
             }.frame(maxWidth: .infinity, alignment: .leading)
 
             Text(entry.cpuFormatted)
@@ -504,8 +510,12 @@ struct SystemCleanerSettingsView: View {
                 ForEach(manager.processEntries.prefix(20)) { proc in
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(proc.name).font(.system(size: 13, weight: .medium)).lineLimit(1)
-                            Text(proc.user).font(.system(size: 10)).foregroundStyle(.secondary)
+                            HStack(spacing: 6) {
+                                    Image(systemName: proc.categoryIcon)
+                                        .font(.system(size: 10)).foregroundStyle(.secondary).frame(width: 14)
+                                    Text(proc.displayDescription).font(.system(size: 13, weight: .medium)).lineLimit(1)
+                                }
+                                Text("PID \(proc.pid) · \(proc.user)").font(.system(size: 10)).foregroundStyle(.secondary)
                         }
                         Spacer()
                         Text(proc.cpuFormatted)
@@ -524,7 +534,7 @@ struct SystemCleanerSettingsView: View {
                 }
 
                 if manager.processEntries.count > 20 {
-                    Text("还有 \(manager.processEntries.count - 20) 个进程，请使用独立窗口查看完整列表（⌘⇧K）")
+                    Text("还有 \(manager.processEntries.count - 20) 个进程，使用 ⌘⇧K 查看完整列表")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }

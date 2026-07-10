@@ -39,6 +39,46 @@ struct ProcessEntry: Identifiable, Hashable {
     var cpuFormatted: String {
         String(format: "%.1f%%", cpuPercent)
     }
+
+    /// 进程类型图标
+    var categoryIcon: String {
+        let lower = name.lowercased()
+        if lower.contains("xcode") || lower.contains("swift") || lower.contains("clang") { return "hammer" }
+        if lower.contains("safari") || lower.contains("chrome") || lower.contains("firefox") || lower.contains("edge") { return "safari" }
+        if lower.contains("terminal") || lower.contains("iterm") || lower.contains("warp") { return "terminal" }
+        if lower.contains("finder") { return "finder" }
+        if lower.contains("music") || lower.contains("spotify") { return "music.note" }
+        if lower.contains("code") || lower.contains("cursor") { return "chevron.left.forwardslash.chevron.right" }
+        if lower.contains("docker") { return "shippingbox" }
+        if lower.contains("node") || lower.contains("npm") { return "circle.hexagongrid" }
+        if lower.contains("python") { return "snake" }
+        if lower.contains("git") { return "arrow.triangle.branch" }
+        return "app.dashed"
+    }
+
+    /// 人类可读的进程描述
+    var displayDescription: String {
+        let lower = name.lowercased()
+        if lower.contains("safari") { return "Safari 浏览器" }
+        if lower.contains("chrome") && lower.contains("helper") { return "Chrome 渲染器" }
+        if lower.contains("chrome") { return "Chrome 浏览器" }
+        if lower.contains("firefox") { return "Firefox 浏览器" }
+        if lower.contains("xcode") && lower.contains("build") { return "Xcode 构建" }
+        if lower.contains("xcode") { return "Xcode" }
+        if lower.contains("swift") { return "Swift 编译" }
+        if lower.contains("terminal") { return "终端" }
+        if lower.contains("finder") { return "访达" }
+        if lower.contains("spotify") { return "Spotify" }
+        if lower.contains("music") && !lower.contains("itunes") { return "Apple Music" }
+        if lower.contains("code") && lower.contains("cursor") { return "Cursor" }
+        if lower.contains("code") && lower.contains("visual") { return "VS Code" }
+        if lower.contains("docker") { return "Docker" }
+        if lower.contains("node") { return "Node.js" }
+        if lower.contains("python") { return "Python" }
+        if lower.contains("git") { return "Git" }
+        if lower.contains("wechat") || lower.contains("微信") { return "微信" }
+        return name
+    }
 }
 
 // MARK: - Manager
@@ -185,22 +225,32 @@ final class SystemCleanerManager: ObservableObject {
     // MARK: - Process Scanning
 
     func scanProcesses() async {
-        let output = runShell("ps -eo pid,pcpu,rss,user,comm -r | head -60")
+        // ps: pid, cpu%, rss(KB), user, comm (进程名不含路径)
+        let output = runShell("ps -eo pid,pcpu,rss,user,comm -r 2>/dev/null | head -80")
         let lines = output.components(separatedBy: "\n").dropFirst()
         var procs: [ProcessEntry] = []
 
         for line in lines {
-            let parts = line.split(separator: " ", omittingEmptySubsequences: true)
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { continue }
+
+            // 按空格拆分，前4列固定，剩余全算作进程名
+            let parts = trimmed.split(separator: " ", omittingEmptySubsequences: true)
             guard parts.count >= 5,
                   let pid = Int32(parts[0]),
                   let cpu = Double(parts[1]),
                   let mem = UInt64(parts[2]) else { continue }
             let memBytes = mem * 1024
             let user = String(parts[3])
-            let name = parts.dropFirst(4).joined(separator: " ")
+            var name = parts.dropFirst(4).joined(separator: " ")
 
-            // Filter out system processes
-            guard pid > 100, !name.hasPrefix("kernel"), name != "ps" else { continue }
+            // 如果进程名是路径，只取最后一段
+            if name.contains("/") {
+                name = (name as NSString).lastPathComponent
+            }
+
+            // 过滤内核和ps本身
+            guard pid > 100, name != "ps", !name.hasPrefix("kernel_task") else { continue }
             procs.append(ProcessEntry(pid: pid, name: name, cpuPercent: cpu, memoryBytes: memBytes, user: user))
         }
 

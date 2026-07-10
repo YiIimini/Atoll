@@ -927,9 +927,9 @@ struct VoiceInputButton: View {
             if isContinuousMode && voiceManager.isActive {
                 // 实时对话激活 — 按钮变身律动球
                 ZStack {
-                    DreamOrbView(size: 56, previewMode: true)
+                    DreamOrbView(size: 36, previewMode: true)
                 }
-                .frame(width: 56, height: 56)
+                .frame(width: 36, height: 36)
             } else {
                 ZStack {
                     Circle()

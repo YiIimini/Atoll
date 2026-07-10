@@ -78,10 +78,8 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .media, .liveActivities, .lockScreen, .devices:                 return .mediaAndDisplay
         case .hudAndOSD, .battery:                                           return .system
         case .timer, .calendar, .notes:                                      return .productivity
-        case .clipboard, .screenAssistant, .colorPicker, .shelf,
-             .downloads, .shortcuts, .systemCleaner:                         return .utilities
-        case .stats, .terminal:                                              return .developer
-        case .extensions:                                                    return .integrations
+        case .clipboard, .screenAssistant, .colorPicker, .shelf, .systemCleaner, .downloads, .shortcuts: return .utilities
+        case .stats, .terminal, .extensions:                                 return .developer
         case .about:                                                         return .info
         }
     }
@@ -385,7 +383,6 @@ struct SettingsView: View {
             .shelf,
             .downloads,
             .shortcuts,
-            .systemCleaner,
             // Developer
             .stats,
             .terminal,
@@ -908,7 +905,7 @@ struct SettingsView: View {
             }
         case .systemCleaner:
             SettingsForm(tab: .systemCleaner) {
-                SystemCleanerSettingsView()
+                EmptyView()
             }
         case .about:
             if let controller = updaterController {
