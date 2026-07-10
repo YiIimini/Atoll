@@ -261,14 +261,12 @@ struct ChatMessagesView: View {
                                     .foregroundColor(.blue.opacity(0.6))
                                 
                                 VStack(spacing: 8) {
-                                    DreamOrbView(size: 80, isConversationActive: voiceManager.isActive)
-                                        .padding(.bottom, 4)
                                     Text("AI Assistant")
                                         .font(.title)
                                         .fontWeight(.bold)
                                         .foregroundColor(.primary)
                                     
-                                    Text(voiceManager.isActive ? "焕彩律动球正在聆听" : "开启实时对话，律动球将伴舞")
+                                    Text("AI 助手随时为你服务")
                                         .font(.body)
                                         .foregroundColor(.secondary)
                                         .multilineTextAlignment(.center)
@@ -283,13 +281,14 @@ struct ChatMessagesView: View {
                             }
                             
                             if screenAssistantManager.isLoading {
-                                HStack(spacing: 16) {
-                                    DreamOrbView(size: 48, isConversationActive: true)
+                                HStack(spacing: 12) {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("AI 正在思考...")
                                             .font(.body.weight(.medium))
                                             .foregroundColor(.primary.opacity(0.8))
-                                        Text("焕彩律动中")
+                                        Text("请稍候")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
                                     }
