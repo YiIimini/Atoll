@@ -199,6 +199,23 @@ struct DynamicIslandHeader: View {
                         }
                     }
                     
+                    // System Cleaner shortcut button
+                    Button(action: {
+                        SystemCleanerPanelManager.shared.show()
+                    }) {
+                        Capsule()
+                            .fill(.black)
+                            .frame(width: 30, height: 30)
+                            .overlay {
+                                Image(systemName: "wand.and.stars")
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .imageScale(.medium)
+                            }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .help("系统清理")
+
                     if Defaults[.settingsIconInNotch] {
                         Button(action: {
                             SettingsWindowController.shared.showWindow()
