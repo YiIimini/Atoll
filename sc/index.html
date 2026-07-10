@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=1920, height=1080"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>/* ═══════════════════════════════════════
+   暗夜紫金 · Aurora Night
+   深蓝黑底 + 紫色强调 + 金色装饰
+   默认方案，适合技术产品/工具类教程
+   ═══════════════════════════════════════ */
+
+:root {
+  --bg:       #08081A;
+  --surface:  rgba(14, 14, 42, 0.65);
+  --text:     #F5F0FF;
+  --dim:      #BEB5E8;
+  --accent:   #A78BFA;
+  --gold:     #E0B84C;
+  --tag-bg:   rgba(167, 139, 250, 0.15);
+  --tag-text: #C4B5FD;
+  --border:   rgba(255, 255, 255, 0.06);
+  --vignette: rgba(8, 8, 26, 0.55);
+  --title-shadow1: rgba(240, 96, 112, 0.3);
+  --title-shadow2: rgba(96, 140, 240, 0.3);
+  --cap-gradient: linear-gradient(135deg, #F0B0C0, #E0B84C, #F06070, #C084FC);
+}
+
+.gold-line { background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+.gold-line-v { background: linear-gradient(180deg, transparent, var(--gold), transparent); }
+</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg, #08081A);font-family:-apple-system,sans-serif}
+
+/* ═══ shared ═══ */
+.scene{position:absolute;inset:0;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:40px;padding:80px 100px }
+.img-wrap{position:relative;flex:0 0 55%;display:flex;align-items:center;justify-content:center}
+.img-wrap img{object-fit:contain;max-width:85%;max-height:68vh;border-radius:10px}
+.img-stack{position:relative;display:flex;align-items:center;justify-content:center}
+.img-stack img{position:absolute;object-fit:contain;max-width:85%;max-height:68vh;border-radius:10px;opacity:0}
+.txt-col{flex:0 0 35%;display:flex;flex-direction:column;justify-content:center;text-align:left;max-width:340px}
+.s-label{font-size:20px;color:var(--accent, #A78BFA);letter-spacing:6px;font-weight:600;margin-bottom:8px}
+.s-title{font-size:60px;font-weight:800;color:var(--text, #F5F0FF);line-height:1.15;margin-bottom:10px}
+.s-title .ac{color:var(--accent, #A78BFA)}
+.s-sub{font-size:28px;color:var(--dim, #BEB5E8);line-height:1.6}
+.gold-line{width:140px;height:2px;background:linear-gradient(90deg,transparent,var(--gold, #E0B84C),transparent);margin:14px 0}
+.gold-line-v{width:2px;height:100px;background:linear-gradient(180deg,transparent,var(--gold, #E0B84C),transparent);margin:10px 0}
+
+/* tags */
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.tag{background:var(--tag-bg, rgba(167,139,250,0.15));color:var(--tag-text, #C4B5FD);border-radius:18px;padding:4px 14px;font-size:22px;font-weight:500}
+
+/* glass panel for text-only scenes */
+.glass{background:var(--surface, rgba(14,14,42,0.65));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border, rgba(255,255,255,0.06));border-radius:16px;padding:36px 56px;text-align:center}
+
+/* s12 grid for 16:9 */
+.s12-grid{display:flex;gap:40px}
+.s12-col{flex:1}
+.s12-col h3{font-size:24px;color:var(--accent, #A78BFA);margin-bottom:12px;border-bottom:1px solid rgba(167,139,250,0.3);padding-bottom:8px}
+.s12-col p{font-size:18px;color:var(--dim, #BEB5E8);line-height:1.6;margin-bottom:5px}
+
+/* vignette + grain */
+#vignette{position:fixed;inset:0;z-index:90;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,var(--vignette, rgba(8,8,26,0.55)) 100%)}
+#grain{position:fixed;inset:0;z-index:91;pointer-events:none;opacity:0.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px}
+#particles{position:fixed;inset:0;pointer-events:none;z-index:89}
+.dot{position:absolute;border-radius:50%;pointer-events:none}
+
+/* caption */
+#cap{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:95;opacity:0;text-align:center;max-width:1760px}
+#cap span{font-size:26px;font-weight:600;background:linear-gradient(135deg,#F0B0C0,var(--gold, #E0B84C),#F06070,#C084FC);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.35}
+
+/* s1 large */
+#s1-title{font-size:88px;font-weight:800;color:var(--text, #F5F0FF);text-align:center;line-height:1.1;text-shadow:2px 0 0 var(--title-shadow1, rgba(240,96,112,0.3)),-2px 0 0 var(--title-shadow2, rgba(96,140,240,0.3))}
+</style>
+</head>
+<body>
+
+<div id="root" data-composition-id="main" data-start="0" data-duration="88" data-width="1920" data-height="1080">
+<audio id="narration" src="narration.wav" data-start="0" data-duration="88" preload="auto"></audio>
+
+<div id="vignette"></div><div id="grain"></div><div id="particles"></div>
+
+<div id="cap"><span></span></div>
+
+<!-- S1 TITLE -->
+<div id="s1" class="scene clip" data-start="0" data-duration="6" data-track-index="10" data-layout-allow-overflow>
+<div class="glass" style="text-align:center">
+<div class="s-label">v2.2.0-cn</div>
+<div id="s1-title">Atoll</div>
+<div class="gold-line" style="width:160px;margin:14px auto"></div>
+<div class="s-sub" style="font-size:24px">macOS 灵动岛 · 中文优化版</div>
+</div>
+</div>
+<!-- S2 -->
+<div id="s2" class="scene clip" data-start="6" data-duration="8" data-track-index="10" data-layout-allow-overflow>
+<div class="glass" style="max-width:750px;text-align:left">
+<div class="s-label">场景 2</div>
+<div class="s-title" style="font-size:44px;line-height:1.2">Atoll 将 MacBook 的刘海变成媒体控制、系统监控和快捷工具的集中操作台。</div>
+<div class="gold-line"></div>
+</div>
+</div>
+<!-- S3 -->
+<div id="s3" class="scene clip" data-start="14" data-duration="8" data-track-index="10" data-layout-allow-overflow>
+<div class="glass" style="max-width:750px;text-align:left">
+<div class="s-label">场景 3</div>
+<div class="s-title" style="font-size:44px;line-height:1.2">支持 Apple Music、Spotify、Amazon Music 和 YouTube Music。锁屏小组件：天气、日历、计时器、电池。</div>
+<div class="gold-line"></div>
+</div>
+</div>
+<!-- S4 -->
+<div id="s4" class="scene clip" data-start="22" data-duration="8" data-track-index="10" data-layout-allow-overflow>
+<div class="glass" style="max-width:750px;text-align:left">
+<div class="s-label">场景 4</div>
+<div class="s-title" style="font-size:44px;line-height:1.2">屏幕助手 Screen Assistant，支持七家 AI 供应商。Gemini、OpenAI GPT、Claude、Groq、DeepSeek、OpenRouter 以及本地 Ollama 模型。</div>
+<div class="gold-line"></div>
+</div>
+</div>
+<!-- S5 -->
+<div id="s5" class="scene clip" data-start="30" data-duration="8" data-track-index="10" data-layout-allow-overflow>
+<div class="glass" style="max-width:750px;text-align:left">
+<div class="s-label">场景 5</div>
+<div class="s-title" style="font-size:44px;line-height:1.2">轻量级系统监控，CPU、GPU、内存、网络和磁盘。LLM 用量追踪支持 Claude、Codex 和 Cursor。</div>
+<div class="gold-line"></div>
+</div>
+</div>
+<!-- S6 -->
+<div id="s6" class="scene clip" data-start="38" data-duration="8" data-track-index="10" data-layout-allow-overflow>
+<div class="glass" style="max-width:750px;text-align:left">
+<div class="s-label">场景 6</div>
+<div class="s-title" style="font-size:44px;line-height:1.2">设置窗口共七组二十一个标签页。核心、媒体与显示、系统、生产力、实用工具、开发者、集成。</div>
+<div class="gold-line"></div>
+</div>
+</div>
+<!-- S7 -->
+<div id="s7" class="scene clip" data-start="46" data-duration="7" data-track-index="10" data-layout-allow-overflow>
+<div class="glass" style="max-width:750px;text-align:left">
+<div class="s-label">场景 7</div>
+<div class="s-title" style="font-size:44px;line-height:1.2">通用设置包含启动项、显示器切换、手势控制。外观设置支持液态玻璃、刘海宽度、自定义应用图标。</div>
+<div class="gold-line"></div>
+</div>
+</div>
+<!-- S8 -->
+<div id="s8" class="scene clip" data-start="53" data-duration="8" data-track-index="10" data-layout-allow-overflow>
+<div class="glass" style="max-width:750px;text-align:left">
+<div class="s-label">场景 8</div>
+<div class="s-title" style="font-size:44px;line-height:1.2">媒体设置支持多音乐来源切换和 Spotify 授权。实时活动覆盖专注模式、隐私指示器和 Caps Lock。</div>
+<div class="gold-line"></div>
+</div>
+</div>
+<!-- S9 -->
+<div id="s9" class="scene clip" data-start="61" data-duration="7" data-track-index="10" data-layout-allow-overflow>
+<div class="glass" style="max-width:750px;text-align:left">
+<div class="s-label">场景 9</div>
+<div class="s-title" style="font-size:44px;line-height:1.2">生产力工具包含计时器、日历集成和 Apple Notes 同步。实用工具含剪贴板、取色器、终端和快捷文件架。</div>
+<div class="gold-line"></div>
+</div>
+</div>
+<!-- S10 -->
+<div id="s10" class="scene clip" data-start="68" data-duration="7" data-track-index="10" data-layout-allow-overflow>
+<div class="glass" style="max-width:750px;text-align:left">
+<div class="s-label">场景 10</div>
+<div class="s-title" style="font-size:44px;line-height:1.2">系统控制支持灵动岛 HUD、自定义 OSD、竖条和圆形进度。开发者可查看系统性能和 LLM 使用量。</div>
+<div class="gold-line"></div>
+</div>
+</div>
+<!-- S11 -->
+<div id="s11" class="scene clip" data-start="75" data-duration="7" data-track-index="10" data-layout-allow-overflow>
+<div class="glass" style="max-width:750px;text-align:left">
+<div class="s-label">场景 11</div>
+<div class="s-title" style="font-size:44px;line-height:1.2">中文优化版基于 Hariharan Mudaliar 的原版 Fork 开发。增加完整 AI 多供应商支持、Focus 监控模式、中文界面。</div>
+<div class="gold-line"></div>
+</div>
+</div>
+<!-- S12 OUTRO -->
+<div id="s12" class="scene clip" data-start="82" data-duration="6.68" data-track-index="10" data-layout-allow-overflow>
+<div class="glass" style="text-align:center;max-width:750px">
+<div class="s-label">开始使用</div>
+<div class="s-title" style="font-size:48px">Atoll <span class="ac">中文优化版</span></div>
+<div class="gold-line"></div>
+<div class="s-sub" style="font-size:24px;color:var(--gold)">GitHub 搜索 Atoll · Releases 下载 DMG</div>
+<div class="s-sub" style="font-size:24px;color:var(--gold);margin-top:8px">感谢观看 ♪</div>
+</div>
+</div>
+
+
+
+
+
+
+
+
+<script>
+window.__timelines=window.__timelines||{};
+const tl=gsap.timeline({paused:true});
+const setCap=(t)=>document.querySelector('#cap span').textContent=t;
+const capEl=document.getElementById("cap");
+
+// Particles
+(()=>{
+const l=document.getElementById("particles");
+for(let i=0;i<25;i++){
+const d=document.createElement("div");d.className="dot";
+const c=["var(--accent)","var(--gold)","var(--dim)"][i%3];
+d.style.cssText=`left:${5+i*3.8}%;top:${8+(i*7)%85}%;width:${3+(i%3)*2}px;height:${3+(i%3)*2}px;background:${c};opacity:${0.08+(i%3)*0.05}`;
+l.appendChild(d);
+tl.to(d,{y:-15-(i%3)*6,opacity:0.03+(i%3)*0.03,duration:5+(i%3)*2,ease:"sine.inOut",yoyo:true,repeat:Math.floor(88/(5+(i%3)*2))-1},0.5+i*0.1);
+}
+})();
+
+// S1
+tl.from("#s1 .glass",{scale:0.85,opacity:0,duration:0.6,ease:"back.out(1.7)"},0);
+tl.call(()=>setCap("Atoll — macOS 灵动岛 · 中文优化版"),null,0+0.2);
+tl.to(capEl,{opacity:1,duration:0.2},0+0.3);
+// S2
+tl.from("#s2 .glass",{scale:0.85,opacity:0,duration:0.6,ease:"back.out(1.7)"},6);
+tl.call(()=>setCap("Atoll 将 MacBook 的刘海变成媒体控制、系统监控和快捷工具的集中操作台。"),null,6);
+tl.to(capEl,{opacity:1,duration:0.2},6+0.3);
+// S3
+tl.from("#s3 .glass",{scale:0.85,opacity:0,duration:0.6,ease:"back.out(1.7)"},14);
+tl.call(()=>setCap("支持 Apple Music、Spotify、Amazon Music 和 YouTube Music。锁屏小组件：天气、日历、计时器、电池。"),null,14);
+tl.to(capEl,{opacity:1,duration:0.2},14+0.3);
+// S4
+tl.from("#s4 .glass",{scale:0.85,opacity:0,duration:0.6,ease:"back.out(1.7)"},22);
+tl.call(()=>setCap("屏幕助手 Screen Assistant，支持七家 AI 供应商。Gemini、OpenAI GPT、Claude、Groq、DeepSeek、OpenRouter 以及本地 Ollama 模型。"),null,22);
+tl.to(capEl,{opacity:1,duration:0.2},22+0.3);
+// S5
+tl.from("#s5 .glass",{scale:0.85,opacity:0,duration:0.6,ease:"back.out(1.7)"},30);
+tl.call(()=>setCap("轻量级系统监控，CPU、GPU、内存、网络和磁盘。LLM 用量追踪支持 Claude、Codex 和 Cursor。"),null,30);
+tl.to(capEl,{opacity:1,duration:0.2},30+0.3);
+// S6
+tl.from("#s6 .glass",{scale:0.85,opacity:0,duration:0.6,ease:"back.out(1.7)"},38);
+tl.call(()=>setCap("设置窗口共七组二十一个标签页。核心、媒体与显示、系统、生产力、实用工具、开发者、集成。"),null,38);
+tl.to(capEl,{opacity:1,duration:0.2},38+0.3);
+// S7
+tl.from("#s7 .glass",{scale:0.85,opacity:0,duration:0.6,ease:"back.out(1.7)"},46);
+tl.call(()=>setCap("通用设置包含启动项、显示器切换、手势控制。外观设置支持液态玻璃、刘海宽度、自定义应用图标。"),null,46);
+tl.to(capEl,{opacity:1,duration:0.2},46+0.3);
+// S8
+tl.from("#s8 .glass",{scale:0.85,opacity:0,duration:0.6,ease:"back.out(1.7)"},53);
+tl.call(()=>setCap("媒体设置支持多音乐来源切换和 Spotify 授权。实时活动覆盖专注模式、隐私指示器和 Caps Lock。"),null,53);
+tl.to(capEl,{opacity:1,duration:0.2},53+0.3);
+// S9
+tl.from("#s9 .glass",{scale:0.85,opacity:0,duration:0.6,ease:"back.out(1.7)"},61);
+tl.call(()=>setCap("生产力工具包含计时器、日历集成和 Apple Notes 同步。实用工具含剪贴板、取色器、终端和快捷文件架。"),null,61);
+tl.to(capEl,{opacity:1,duration:0.2},61+0.3);
+// S10
+tl.from("#s10 .glass",{scale:0.85,opacity:0,duration:0.6,ease:"back.out(1.7)"},68);
+tl.call(()=>setCap("系统控制支持灵动岛 HUD、自定义 OSD、竖条和圆形进度。开发者可查看系统性能和 LLM 使用量。"),null,68);
+tl.to(capEl,{opacity:1,duration:0.2},68+0.3);
+// S11
+tl.from("#s11 .glass",{scale:0.85,opacity:0,duration:0.6,ease:"back.out(1.7)"},75);
+tl.call(()=>setCap("中文优化版基于 Hariharan Mudaliar 的原版 Fork 开发。增加完整 AI 多供应商支持、Focus 监控模式、中文界面。"),null,75);
+tl.to(capEl,{opacity:1,duration:0.2},75+0.3);
+// S12
+tl.from("#s12 .glass",{scale:0.85,opacity:0,duration:0.6,ease:"back.out(1.7)"},82);
+tl.call(()=>setCap("GitHub 搜索 Atoll，Releases 页面下载 DMG 安装。感谢观看，下期见。"),null,82);
+tl.to(capEl,{opacity:1,duration:0.2},82+0.3);
+
+// Final
+tl.call(()=>setCap(""),null,84);
+tl.to(capEl,{opacity:0,duration:0.3},84.2);
+const fo=document.createElement('div');
+fo.style.cssText='position:fixed;inset:0;background:var(--bg);opacity:0;pointer-events:none;z-index:99';
+document.body.appendChild(fo);
+tl.to(fo,{opacity:1,duration:1.2,ease:"power2.inOut"},86.5);
+
+window.__timelines["main"]=tl;
+</script>
+</body>
+</html>
