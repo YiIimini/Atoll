@@ -6,15 +6,31 @@ import Defaults
 // MARK: - 语音识别供应商
 
 enum SpeechProvider: String, CaseIterable, Identifiable, Defaults.Serializable {
-    case system       = "系统语音识别"
+    case system        = "系统语音识别"
     case openaiWhisper = "OpenAI Whisper"
+    case alibabaNls    = "阿里云语音识别"
+    case baiduAsr      = "百度语音识别"
+    case iflytek       = "讯飞语音听写"
 
     var id: String { rawValue }
 
     var needsApiKey: Bool {
         switch self {
-        case .system:       return false
+        case .system:        return false
         case .openaiWhisper: return true
+        case .alibabaNls:    return true
+        case .baiduAsr:      return true
+        case .iflytek:       return true
+        }
+    }
+    
+    var apiDoc: String {
+        switch self {
+        case .system:        return ""
+        case .openaiWhisper: return "与 ChatGPT 共用 API Key"
+        case .alibabaNls:    return "从阿里云智能语音交互控制台获取 AppKey + AccessToken"
+        case .baiduAsr:      return "从百度AI开放平台获取 API Key + Secret Key"
+        case .iflytek:       return "从讯飞开放平台获取 APPID + APIKey"
         }
     }
 }
@@ -62,12 +78,7 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
 
         let provider = Defaults[.speechProvider]
 
-        switch provider {
-        case .system:
-            startSystemRecognition()
-        case .openaiWhisper:
-            startWhisperStreaming()
-        }
+        resolveProvider()
     }
 
     /// 停止对话模式
@@ -198,6 +209,17 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
 
     // MARK: - OpenAI Whisper 流式识别
 
+    private func resolveProvider() {
+        let provider = Defaults[.speechProvider]
+        switch provider {
+        case .system:        startSystemRecognition()
+        case .openaiWhisper: startWhisperStreaming()
+        case .alibabaNls:    startAlibabaRecognition()
+        case .baiduAsr:      startBaiduRecognition()
+        case .iflytek:       startIflytekRecognition()
+        }
+    }
+
     private func startWhisperStreaming() {
         let apiKey = Defaults[.speechApiKey]
         guard !apiKey.isEmpty else {
@@ -224,18 +246,31 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
 
         audioRecorder = try? AVAudioRecorder(url: url, settings: settings)
         audioRecorder?.delegate = self
-        audioRecorder?.isMeteringEnabled = true
-        audioRecorder?.record(forDuration: 3.0)  // 每3秒一段
+        audioRecorder?.record(forDuration: 3.0)
     }
 
+    // AVAudioRecorderDelegate — 统一处理录音完成
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         guard flag else { return }
         let url = recorder.url
-        sendToWhisper(url: url)
+        let provider = Defaults[.speechProvider]
+
+        switch provider {
+        case .openaiWhisper:
+            sendToWhisper(url: url)
+        case .alibabaNls:
+            sendToAlibaba(url: url, appKey: Defaults[.speechApiKey], token: Defaults[.speechApiSecret])
+        case .baiduAsr:
+            sendToBaidu(url: url, apiKey: Defaults[.speechApiKey], secretKey: Defaults[.speechApiSecret])
+        case .iflytek:
+            sendToIflytek(url: url, appId: Defaults[.speechApiKey], apiKey: Defaults[.speechApiSecret])
+        default:
+            break
+        }
 
         // 继续下一段
         if isActive && Defaults[.voiceMode] == .continuous {
-            startRecordingChunks(apiKey: Defaults[.speechApiKey])
+            resolveProvider()
         }
     }
 
@@ -271,4 +306,172 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
             }
         }.resume()
     }
+
+        // MARK: - 阿里云 NLS 识别
+
+        private func startAlibabaRecognition() {
+            let appKey = Defaults[.speechApiKey]
+            let accessToken = Defaults[.speechApiSecret]
+            guard !appKey.isEmpty, !accessToken.isEmpty else {
+                print("❌ 阿里云语音识别未配置 AppKey/Token")
+                return
+            }
+            startRecordingChunksForProvider(provider: "alibaba")
+        }
+
+        private func sendToAlibaba(url: URL, appKey: String, token: String) {
+            guard let audioData = try? Data(contentsOf: url) else { return }
+            // Base64 encode
+            let base64 = audioData.base64EncodedString()
+
+            var request = URLRequest(url: URL(string: "https://nls-gateway-cn-shanghai.aliyuncs.com/stream/v1/asr?appkey=\(appKey)")!)
+            request.httpMethod = "POST"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "X-NLS-Token")
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+            let body: [String: Any] = [
+                "payload": [
+                    "enable_intermediate_result": true,
+                    "enable_punctuation_prediction": true,
+                    "enable_inverse_text_normalization": true
+                ],
+                "context": ["audio": ["audio_format": "wav", "sample_rate": 16000]],
+                "audio": base64
+            ]
+            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+            URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
+                guard let data,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let result = json["result"] as? String else { return }
+                DispatchQueue.main.async {
+                    self?.liveText += result
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }.resume()
+        }
+
+        // MARK: - 百度语音识别
+
+        private func startBaiduRecognition() {
+            let apiKey = Defaults[.speechApiKey]
+            let secretKey = Defaults[.speechApiSecret]
+            guard !apiKey.isEmpty, !secretKey.isEmpty else {
+                print("❌ 百度语音识别未配置")
+                return
+            }
+            startRecordingChunksForProvider(provider: "baidu")
+        }
+
+        private func sendToBaidu(url: URL, apiKey: String, secretKey: String) {
+            guard let audioData = try? Data(contentsOf: url) else { return }
+            let base64 = audioData.base64EncodedString()
+            let len = audioData.count
+
+            // 获取 access_token
+            let tokenURL = "https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=\(apiKey)&client_secret=\(secretKey)"
+
+            URLSession.shared.dataTask(with: URL(string: tokenURL)!) { [weak self] tokenData, _, _ in
+                guard let tokenData,
+                      let tokenJson = try? JSONSerialization.jsonObject(with: tokenData) as? [String: Any],
+                      let accessToken = tokenJson["access_token"] as? String else { return }
+
+                var request = URLRequest(url: URL(string: "https://vop.baidu.com/server_api?dev_pid=1537&cuid=atoll_mac&token=\(accessToken)")!)
+                request.httpMethod = "POST"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                let body: [String: Any] = [
+                    "format": "wav",
+                    "rate": 16000,
+                    "channel": 1,
+                    "speech": base64,
+                    "len": len
+                ]
+                request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+                URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
+                    guard let data,
+                          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                          let result = json["result"] as? [String] else { return }
+                    DispatchQueue.main.async {
+                        self?.liveText += result.joined()
+                        try? FileManager.default.removeItem(at: url)
+                    }
+                }.resume()
+            }.resume()
+        }
+
+        // MARK: - 讯飞语音听写
+
+        private func startIflytekRecognition() {
+            let appId = Defaults[.speechApiKey]
+            let apiKey = Defaults[.speechApiSecret]
+            guard !appId.isEmpty, !apiKey.isEmpty else {
+                print("❌ 讯飞语音未配置")
+                return
+            }
+            startRecordingChunksForProvider(provider: "iflytek")
+        }
+
+        private func sendToIflytek(url: URL, appId: String, apiKey: String) {
+            guard let audioData = try? Data(contentsOf: url) else { return }
+            let base64 = audioData.base64EncodedString()
+
+            let host = "iat-api.xfyun.cn"
+            var request = URLRequest(url: URL(string: "https://\(host)/v2/iat")!)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+            let body: [String: Any] = [
+                "common": ["app_id": appId],
+                "business": [
+                    "language": "zh_cn",
+                    "domain": "iat",
+                    "accent": "mandarin",
+                    "ptt": 0,
+                    "rlang": "zh-cn"
+                ],
+                "data": [
+                    "status": 2,
+                    "format": "audio/L16;rate=16000",
+                    "encoding": "raw",
+                    "audio": base64
+                ]
+            ]
+            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+            URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
+                guard let data,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let code = json["code"] as? Int, code == 0,
+                      let dataObj = json["data"] as? [String: Any],
+                      let result = dataObj["result"] as? [String: Any],
+                      let ws = result["ws"] as? [[String: Any]] else { return }
+                let text = ws.compactMap { ($0["cw"] as? [[String: Any]])?.first?["w"] as? String }.joined()
+                DispatchQueue.main.async {
+                    self?.liveText += text
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }.resume()
+        }
+
+        // MARK: - 通用分块录音（所有第三方供应商共用）
+
+        private func startRecordingChunksForProvider(provider: String) {
+            let fileName = "\(provider)_chunk_\(Date().timeIntervalSince1970).wav"
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+
+            let settings: [String: Any] = [
+                AVFormatIDKey: Int(kAudioFormatLinearPCM),
+                AVSampleRateKey: 16000,
+                AVNumberOfChannelsKey: 1,
+                AVLinearPCMBitDepthKey: 16,
+                AVLinearPCMIsFloatKey: false
+            ]
+
+            audioRecorder = try? AVAudioRecorder(url: url, settings: settings)
+            audioRecorder?.delegate = self
+            audioRecorder?.record(forDuration: 4.0)
+        }
+
+
 }

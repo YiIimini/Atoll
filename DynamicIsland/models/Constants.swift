@@ -1253,6 +1253,7 @@ static let enableDeepseekProvider = Key<Bool>("enableDeepseekProvider", default:
     static let enableThinkingMode = Key<Bool>("enableThinkingMode", default: false)
     static let speechProvider = Key<SpeechProvider>("speechProvider", default: .system)
     static let speechApiKey = Key<String>("speechApiKey", default: "")
+    static let speechApiSecret = Key<String>("speechApiSecret", default: "")
     static let voiceMode = Key<VoiceMode>("voiceMode", default: .manual)
     static let localModelEndpoint = Key<String>("localModelEndpoint", default: "http://localhost:11434")
 

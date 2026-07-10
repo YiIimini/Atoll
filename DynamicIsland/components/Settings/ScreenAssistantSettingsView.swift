@@ -18,6 +18,7 @@ struct ScreenAssistantSettings: View {
     @Default(.enableThinkingMode) var enableThinkingMode
     @Default(.speechProvider) var speechProvider
     @Default(.speechApiKey) var speechApiKey
+    @Default(.speechApiSecret) var speechApiSecret
     @Default(.voiceMode) var voiceMode
     @Default(.localModelEndpoint) var localModelEndpoint
 
