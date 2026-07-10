@@ -164,15 +164,14 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         // Close existing panels first
         closePanels()
         
-        // Create and show chat messages panel (left side)
-        chatMessagesPanel = ChatMessagesPanel()
-        chatMessagesPanel?.positionOnLeftSide()
-        chatMessagesPanel?.makeKeyAndOrderFront(nil)
-        
-        // Create and show input panel (center)
+        // 先创建输入面板（底部居中），再创建聊天面板（上方悬浮）
         chatInputPanel = ChatInputPanel()
         chatInputPanel?.positionInCenter()
         chatInputPanel?.makeKeyAndOrderFront(nil)
+        
+        chatMessagesPanel = ChatMessagesPanel()
+        chatMessagesPanel?.positionAboveInput()
+        chatMessagesPanel?.makeKeyAndOrderFront(nil)
         
         // Focus on input panel for immediate typing
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

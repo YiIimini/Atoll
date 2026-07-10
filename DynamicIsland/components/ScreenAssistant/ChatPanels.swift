@@ -58,7 +58,7 @@ class ChatMessagesPanel: NSPanel {
         isOpaque = false
         hasShadow = true
         level = .floating
-        isMovableByWindowBackground = false  // Fixed position
+        isMovableByWindowBackground = true  // Draggable by background
         titlebarAppearsTransparent = true
         titleVisibility = .hidden
         isFloatingPanel = true
@@ -86,15 +86,19 @@ class ChatMessagesPanel: NSPanel {
         setContentSize(preferredSize)
     }
     
-    func positionOnLeftSide() {
+    /// 将聊天面板定位在输入面板上方（默认居中悬浮）
+    func positionAboveInput() {
         guard let screen = NSScreen.main else { return }
         
         let screenFrame = screen.visibleFrame
         let panelFrame = frame
         
-        // Position on the left side of the screen
-        let xPosition = screenFrame.minX + 50 // 50pt from left edge
-        let yPosition = screenFrame.maxY - panelFrame.height - 100 // 100pt from top
+        // 水平居中
+        let xPosition = (screenFrame.width - panelFrame.width) / 2 + screenFrame.minX
+        // 垂直：位于输入框上方（输入框在底部 100pt，输入框高约 60pt，间距 16pt）
+        let inputPanelBottom = screenFrame.minY + 100
+        let inputPanelTop = inputPanelBottom + 100  // 输入面板顶部估算
+        let yPosition = inputPanelTop + 16  // 上方 16pt 间距
         
         setFrameOrigin(NSPoint(x: xPosition, y: yPosition))
     }
@@ -195,8 +199,14 @@ struct ChatMessagesView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header with close button
+            // 可拖动的标题栏
             HStack {
+                // 拖动提示图标
+                Image(systemName: "line.3.horizontal")
+                    .font(.caption2)
+                    .foregroundColor(.secondary.opacity(0.5))
+                    .help("拖动此处移动窗口")
+                
                 Text("AI Assistant")
                     .font(.headline)
                     .fontWeight(.semibold)
