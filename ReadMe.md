@@ -42,15 +42,13 @@ Atoll turns the MacBook notch into a focused command surface for media, system i
   <img src="https://i.postimg.cc/t49mW5yN/Screenshot-2026-03-02-at-6-00-22-PM.png" alt="Atoll lock screen" width="920">
 </p>
 
-
-
-
-
 ## Highlights
-- Media controls for Apple Music, Spotify, and more with inline previews.
-- Live Activities for media playback, Focus, screen recording, privacy indicators, downloads (beta), and battery/charging.
-- Lock screen widgets for media, timers, charging, Bluetooth devices, and weather.
+- Media controls for Apple Music, Spotify, Amazon Music, and YouTube Music with inline previews.
+- Live Activities for media playback, Focus/DND, screen recording, privacy indicators, downloads (beta), and battery/charging.
+- Lock screen widgets for media, timers, charging, Bluetooth devices, weather, calendar, and reminders.
+- **Screen Assistant** — AI-powered chat with file analysis (Cmd+Shift+A). Supports **7 providers**: Gemini, OpenAI GPT, Claude, Groq, DeepSeek, OpenRouter, and local models (Ollama). Configure API keys, select models, and toggle thinking/reasoning mode per provider in Settings → Screen Assistant.
 - Lightweight system insight for CPU, GPU, memory, network, and disk usage.
+- LLM usage tracking across Claude, Codex, and Cursor with quota monitoring.
 - Productivity tools including timers, clipboard history, color picker, and calendar previews.
 - Customization for layouts, animations, hover behavior, and shortcut remapping.
 
@@ -58,6 +56,12 @@ Atoll turns the MacBook notch into a focused command surface for media, system i
 - Gesture controls for opening/closing the notch and media navigation.
 - Parallax hover interactions with smooth transitions.
 - Lock screen appearance and positioning controls for panels and widgets.
+- Caps Lock indicator with configurable tint modes.
+- Camera and microphone privacy indicators via CoreAudio / CoreMediaIO.
+- Built-in terminal (guake-style dropdown) with configurable shell, font, colors, and cursor.
+- Shelf for quick file access with drag-and-drop and LocalSend device sharing.
+- Dynamic mirror (webcam) in the notch with circle or square shape.
+- Custom idle animations and Lottie visualizers for music live activities.
 
 <p align="center">
   <img src="https://i.postimg.cc/HkLGn6yH/846F86A4_A2F9_4CD6_BC84_1D720D377728_1_201_a.jpg" alt="Atoll preview" width="920">
@@ -79,11 +83,24 @@ Atoll turns the MacBook notch into a focused command surface for media, system i
 - Use tabs for Media, Stats, Timers, Clipboard, and more.
 - Adjust layout, appearance, and shortcuts from Settings.
 - Add files to Shelf from Terminal: `open -a Atoll /path/to/file`.
+- Launch Screen Assistant with `Cmd+Shift+A` to chat with AI, analyze files, or record voice.
 
 ## Settings
-- Choose appearance, animation style, and per‑feature toggles.
-- Remap global shortcuts and adjust hover behaviour.
-- Enable lock screen widgets and select data sources.
+Atoll's Settings window is organized into 7 groups with 21 tabs:
+
+**Core** — General (launch, display, gestures, notch height) and Appearance (glass material, notch width, visualizer, mirror, idle animations, app icon).
+
+**Media & Display** — Media (music source, Spotify auth, controls layout, lyrics, live canvas), Live Activities (recording, Focus/DND, Caps Lock, privacy indicators, reminders), Lock Screen (widgets: media, weather, timer, calendar; glass style, positioning, offsets), and Devices (Bluetooth HUD, battery indicators, AirPods listening mode).
+
+**System** — Controls (Dynamic Island HUD, Custom OSD, Vertical Bar, Circular; progress bar style, volume/brightness steps, DDC integration) and Battery (charging/low/full HUD notifications and thresholds).
+
+**Productivity** — Timer (presets, progress style, mirror system timers, lock screen widget), Calendar (third-party app integration, event display), and Notes (Apple Notes sync, pinning, search, color filtering).
+
+**Utilities** — Clipboard Manager, Screen Assistant (7 AI providers, model selection, thinking mode), Color Picker (history, formats), Shelf (quick share provider, LocalSend, drag behavior), Downloads (Safari listener, indicator style), and Shortcuts (global keyboard shortcuts).
+
+**Developer** — Stats (CPU/GPU/memory/network/disk monitoring, LLM usage tracking across Claude/Codex/Cursor with quota display) and Terminal (shell path, font, colors, cursor, scrollback, mouse reporting).
+
+**Integrations** — Extensions (third-party live activities, lock screen widgets, notch experiences, permissions management).
 
 ## Gesture Controls
 - Two-finger swipe down to open the notch when hover-to-open is disabled; swipe up to close.
