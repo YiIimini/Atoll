@@ -401,3 +401,137 @@ struct CleanerVisualEffect: NSViewRepresentable {
     }
     func updateNSView(_ v: NSVisualEffectView, context: Context) {}
 }
+
+
+// MARK: - Settings View (for Settings navigation)
+
+struct SystemCleanerSettingsView: View {
+    @StateObject private var manager = SystemCleanerManager.shared
+    @State private var selectedTab: CleanerSettingsTab = .cache
+
+    enum CleanerSettingsTab: String, CaseIterable {
+        case cache = "缓存清理"
+        case process = "进程管理"
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                Picker("功能", selection: $selectedTab) {
+                    ForEach(CleanerSettingsTab.allCases, id: \.self) { tab in
+                        HStack(spacing: 6) {
+                            Image(systemName: tab == .cache ? "folder.badge.minus" : "cpu")
+                            Text(tab.rawValue)
+                        }.tag(tab)
+                    }
+                }
+                .pickerStyle(.segmented)
+            } header: {
+                Text("系统清理工具")
+            } footer: {
+                Text("清理系统缓存垃圾、管理运行中的进程。\n也可以使用快捷键 ⌘⇧K 快速打开独立窗口。")
+                    .foregroundStyle(.secondary).font(.caption)
+            }
+
+            if selectedTab == .cache {
+                cacheSettingsSection
+            } else {
+                processSettingsSection
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle("系统清理")
+        .onAppear {
+            if manager.cacheEntries.isEmpty { Task { await manager.scanCaches() } }
+            if manager.processEntries.isEmpty { Task { await manager.scanProcesses() } }
+        }
+    }
+
+    private var cacheSettingsSection: some View {
+        Section {
+            if manager.isScanning {
+                HStack {
+                    ProgressView().scaleEffect(0.8)
+                    Text("正在扫描系统缓存...").font(.caption).foregroundStyle(.secondary)
+                }
+            } else if manager.cacheEntries.isEmpty {
+                Button("立即扫描缓存") { Task { await manager.scanCaches() } }
+            } else {
+                ForEach(manager.cacheEntries) { entry in
+                    HStack {
+                        Image(systemName: entry.category == .xcode ? "hammer" :
+                              entry.category == .logs ? "list.bullet.rectangle" :
+                              entry.category == .trash ? "trash" :
+                              entry.category == .system ? "gearshape.2" : "doc")
+                            .foregroundColor(entry.category == .trash ? .red :
+                                             entry.category == .xcode ? .indigo :
+                                             entry.category == .system ? .orange : .blue)
+                            .frame(width: 20)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.name).font(.system(size: 13))
+                            Text(entry.path).font(.system(size: 10)).foregroundStyle(.secondary)
+                                .lineLimit(1).truncationMode(.middle)
+                        }
+                        Spacer()
+                        Text(entry.sizeFormatted)
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                HStack {
+                    Text("总计: \(ByteCountFormatter.string(fromByteCount: Int64(manager.totalCacheSize), countStyle: .file))")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button(manager.isCleaning ? "清理中..." : "一键清理全部") {
+                        Task { await manager.cleanSelected() }
+                    }
+                    .buttonStyle(.borderedProminent).controlSize(.small)
+                    .tint(.red)
+                    .disabled(manager.isCleaning)
+                }
+            }
+        } header: {
+            Text("系统缓存")
+        }
+    }
+
+    private var processSettingsSection: some View {
+        Section {
+            if manager.processEntries.isEmpty {
+                Button("刷新进程列表") { Task { await manager.scanProcesses() } }
+            } else {
+                ForEach(manager.processEntries.prefix(20)) { proc in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(proc.name).font(.system(size: 13, weight: .medium)).lineLimit(1)
+                            Text(proc.user).font(.system(size: 10)).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Text(proc.cpuFormatted)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundColor(proc.cpuPercent > 50 ? .red : .secondary)
+                            .frame(width: 45, alignment: .trailing)
+                        Text(proc.memoryFormatted)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.secondary).frame(width: 60, alignment: .trailing)
+
+                        Button("结束") {
+                            manager.killProcess(proc)
+                        }
+                        .buttonStyle(.bordered).controlSize(.small).tint(.red)
+                    }
+                }
+
+                if manager.processEntries.count > 20 {
+                    Text("还有 \(manager.processEntries.count - 20) 个进程，请使用独立窗口查看完整列表（⌘⇧K）")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        } header: {
+            Text("运行中的进程")
+        } footer: {
+            Text("按 CPU 占用率排序，仅显示当前用户进程。")
+        }
+    }
+}

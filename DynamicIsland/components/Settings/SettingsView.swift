@@ -66,6 +66,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case shortcuts
     case notes
     case terminal
+    case systemCleaner
     case about
 
     var id: String { rawValue }
@@ -78,7 +79,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .hudAndOSD, .battery:                                           return .system
         case .timer, .calendar, .notes:                                      return .productivity
         case .clipboard, .screenAssistant, .colorPicker, .shelf,
-             .downloads, .shortcuts:                                         return .utilities
+             .downloads, .shortcuts, .systemCleaner:                         return .utilities
         case .stats, .terminal:                                              return .developer
         case .extensions:                                                    return .integrations
         case .about:                                                         return .info
@@ -107,6 +108,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .shortcuts: return String(localized: "Shortcuts")
         case .notes: return String(localized: "Notes")
         case .terminal: return String(localized: "Terminal")
+        case .systemCleaner: return "系统清理"
         case .about: return String(localized: "About")
         }
     }
@@ -133,6 +135,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .shortcuts: return "keyboard"
         case .notes: return "note.text"
         case .terminal: return "apple.terminal"
+        case .systemCleaner: return "wand.and.stars"
         case .about: return "info.circle"
         }
     }
@@ -159,6 +162,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .shortcuts: return .orange
         case .notes: return Color(red: 0.979, green: 0.716, blue: 0.153, opacity: 1.000)
         case .terminal: return Color(red: 0.2, green: 0.8, blue: 0.4)
+        case .systemCleaner: return .indigo
         case .about: return .secondary
         }
     }
@@ -900,6 +904,10 @@ struct SettingsView: View {
         case .terminal:
             SettingsForm(tab: .terminal) {
                 TerminalSettings()
+            }
+        case .systemCleaner:
+            SettingsForm(tab: .systemCleaner) {
+                SystemCleanerSettingsView()
             }
         case .about:
             if let controller = updaterController {

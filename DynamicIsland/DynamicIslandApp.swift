@@ -1064,7 +1064,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         toolsSubmenu.addItem(NSMenuItem.separator())
 
-        let systemCleanerItem = NSMenuItem(title: "System Cleaner", action: #selector(openSystemCleaner), keyEquivalent: "")
+        let systemCleanerItem = NSMenuItem(title: "System Cleaner", action: #selector(openSystemCleaner), keyEquivalent: "K")
+        systemCleanerItem.keyEquivalentModifierMask = [.command, .shift]
         systemCleanerItem.target = self
         toolsSubmenu.addItem(systemCleanerItem)
 
