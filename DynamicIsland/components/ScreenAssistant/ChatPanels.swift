@@ -973,6 +973,7 @@ struct SpeakButton: View {
 struct DreamOrbView: View {
     let size: CGFloat
     var isConversationActive: Bool = false
+    var previewMode: Bool = false
     
     @ObservedObject private var voiceManager = VoiceConversationManager.shared
     @State private var phase: Double = 0
@@ -980,9 +981,9 @@ struct DreamOrbView: View {
     
     private let timer = Timer.publish(every: 0.04, on: .main, in: .common).autoconnect()
     
-    /// 仅在实时对话模式活跃时显示
+    /// 仅在实时对话模式活跃时显示（previewMode 始终显示）
     private var isVisible: Bool {
-        isConversationActive || (voiceManager.isActive && Defaults[.voiceMode] == .continuous)
+        previewMode || isConversationActive || (voiceManager.isActive && Defaults[.voiceMode] == .continuous)
     }
     
     /// 对话活跃时动画更强烈
@@ -1118,7 +1119,7 @@ struct DreamOrbView: View {
 
 // MARK: - 独立律动球窗口（全局快捷键唤起时使用）
 #Preview {
-    DreamOrbView(size: 100)
+    DreamOrbView(size: 100, previewMode: true)
         .frame(width: 200, height: 200)
         .background(Color.black)
 }

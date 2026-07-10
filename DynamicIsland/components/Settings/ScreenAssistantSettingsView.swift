@@ -239,8 +239,13 @@ struct ScreenAssistantSettings: View {
                     Text("使用 macOS 内置语音合成，自动匹配系统「简体中文」语音。无需配置。")
                         .foregroundStyle(.secondary).font(.caption)
                 } else if ttsProvider == .bytedance {
-                    Text("使用火山引擎（豆包）TTS，音色自然度远超系统语音。\n与语音识别的 AppID + AccessToken 共用，若已填写语音识别参数则无需重复输入。")
-                        .foregroundStyle(.secondary).font(.caption)
+                    if VolcanoTTSService.resolveCredentials() != nil {
+                        Text("✅ 已检测到有效凭证（TTS 或语音识别配置）。可直接使用。\n音色自然度远超系统语音，支持 8 种豆包音色。")
+                            .foregroundStyle(.secondary).font(.caption)
+                    } else {
+                        Text("使用火山引擎（豆包）TTS，音色自然度远超系统语音。\n填写上方「语音识别引擎 → 火山引擎」的 AppID + Token 即可共用，无需重复输入。")
+                            .foregroundStyle(.secondary).font(.caption)
+                    }
                 }
             }
 
