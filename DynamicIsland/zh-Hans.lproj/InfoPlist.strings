@@ -1,0 +1,33 @@
+"CFBundleDisplayName" = "Atoll";
+
+/* Apple Events */
+"NSAppleEventsUsageDescription" = "Atoll 使用 AppleScript 控制 Spotify 和 Apple Music。";
+
+/* Bluetooth */
+"NSBluetoothAlwaysUsageDescription" = "Atoll 需要蓝牙权限来检测已连接的音频设备并显示其电池状态。";
+
+/* Calendar */
+"NSCalendarsFullAccessUsageDescription" = "在灵动岛中显示日历事件。";
+"NSCalendarsUsageDescription" = "日历功能所需。";
+
+/* Camera */
+"NSCameraUsageDescription" = "需要摄像头权限以使用镜像模式。";
+
+/* File Access */
+"NSDesktopFolderUsageDescription" = "Atoll 需要访问桌面文件夹以存储截图。";
+"NSDocumentsFolderUsageDescription" = "Atoll 需要访问文稿文件夹以读取和保存拖入 Shelf 的文件。";
+"NSDownloadsFolderUsageDescription" = "Atoll 需要访问下载文件夹以读取文件。";
+
+/* Location */
+"NSLocationUsageDescription" = "Atoll 使用你的位置来显示准确的锁屏天气信息。";
+"NSLocationWhenInUseUsageDescription" = "Atoll 使用你的位置来显示准确的锁屏天气信息。";
+
+/* Reminders */
+"NSRemindersUsageDescription" = "Atoll 需要访问提醒事项以显示你的提醒。";
+
+/* Audio */
+"NSAudioCaptureUsageDescription" = "Atoll 需要音频捕获权限以显示实时音乐波形可视化效果。";
+
+/* Screen Recording */
+"NSScreenCaptureUsageDescription" = "Atoll 需要屏幕录制权限以为 AI 助手功能捕获屏幕截图。";
+"NSAppleMusicUsageDescription" = "Atoll 使用 Apple Music 获取锁屏壁纸的动画专辑封面。";

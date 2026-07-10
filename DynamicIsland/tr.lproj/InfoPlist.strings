@@ -12,3 +12,4 @@
 "NSRemindersUsageDescription" = "Atoll, anımsatıcılarınızı göstermek için Anımsatıcılar erişimine ihtiyaç duyar.";
 "NSAudioCaptureUsageDescription" = "Atoll, gerçek zamanlı müzik dalga biçimi görselleştiricisini göstermek için ses yakalama iznine ihtiyaç duyar.";
 "NSScreenCaptureUsageDescription" = "Atoll, yapay zeka asistanı özelliği için ekran görüntüleri yakalamak üzere ekran kaydı iznine ihtiyaç duyar.";
+"NSAppleMusicUsageDescription" = "Atoll, kilit ekranı duvar kağıdı için animasyonlu albüm kapağı almak üzere Apple Music'i kullanır.";

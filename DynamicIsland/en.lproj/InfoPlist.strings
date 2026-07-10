@@ -1,0 +1,16 @@
+"CFBundleDisplayName" = "Atoll";
+
+"NSAppleEventsUsageDescription" = "Atoll uses AppleScript to control Spotify and Apple Music.";
+"NSAppleMusicUsageDescription" = "Atoll uses Apple Music to fetch animated artwork for the lock screen wallpaper.";
+"NSBluetoothAlwaysUsageDescription" = "Atoll needs Bluetooth access to detect connected audio devices and show their battery status in the HUD.";
+"NSCalendarsFullAccessUsageDescription" = "Shows calendar events in the notch.";
+"NSCalendarsUsageDescription" = "Required for the calendar mode.";
+"NSCameraUsageDescription" = "We need your camera for mirror mode.";
+"NSDesktopFolderUsageDescription" = "Atoll needs access to save screenshots to your desktop.";
+"NSDocumentsFolderUsageDescription" = "Atoll needs access to save and read files dragged into the shelf.";
+"NSDownloadsFolderUsageDescription" = "Atoll needs access to read files in the Downloads folder.";
+"NSLocationUsageDescription" = "Atoll uses your location to show accurate lock screen weather.";
+"NSLocationWhenInUseUsageDescription" = "Atoll uses your location to show accurate lock screen weather.";
+"NSRemindersUsageDescription" = "Atoll needs Reminders access to show your reminders.";
+"NSAudioCaptureUsageDescription" = "Atoll needs audio capture permission to display the real-time music waveform visualizer.";
+"NSScreenCaptureUsageDescription" = "Atoll needs screen recording permission to capture screenshots for the AI assistant feature.";
