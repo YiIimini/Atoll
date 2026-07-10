@@ -11,6 +11,7 @@ enum SpeechProvider: String, CaseIterable, Identifiable, Defaults.Serializable {
     case alibabaNls    = "阿里云语音识别"
     case baiduAsr      = "百度语音识别"
     case iflytek       = "讯飞语音听写"
+    case bytedance     = "火山引擎 (豆包)"
 
     var id: String { rawValue }
 
@@ -21,6 +22,7 @@ enum SpeechProvider: String, CaseIterable, Identifiable, Defaults.Serializable {
         case .alibabaNls:    return true
         case .baiduAsr:      return true
         case .iflytek:       return true
+        case .bytedance:     return true
         }
     }
     
@@ -31,6 +33,7 @@ enum SpeechProvider: String, CaseIterable, Identifiable, Defaults.Serializable {
         case .alibabaNls:    return "从阿里云智能语音交互控制台获取 AppKey + AccessToken"
         case .baiduAsr:      return "从百度AI开放平台获取 API Key + Secret Key"
         case .iflytek:       return "从讯飞开放平台获取 APPID + APIKey"
+        case .bytedance:     return "从火山引擎控制台获取 AppID + AccessToken"
         }
     }
 }
@@ -217,6 +220,7 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
         case .alibabaNls:    startAlibabaRecognition()
         case .baiduAsr:      startBaiduRecognition()
         case .iflytek:       startIflytekRecognition()
+        case .bytedance:     startBytedanceRecognition()
         }
     }
 
@@ -264,6 +268,8 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
             sendToBaidu(url: url, apiKey: Defaults[.speechApiKey], secretKey: Defaults[.speechApiSecret])
         case .iflytek:
             sendToIflytek(url: url, appId: Defaults[.speechApiKey], apiKey: Defaults[.speechApiSecret])
+        case .bytedance:
+            sendToBytedance(url: url, appId: Defaults[.speechApiKey], token: Defaults[.speechApiSecret])
         default:
             break
         }
@@ -473,5 +479,40 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
             audioRecorder?.record(forDuration: 4.0)
         }
 
+
+    // MARK: - 火山引擎 (豆包) 语音识别
+
+    private func startBytedanceRecognition() {
+        let appId = Defaults[.speechApiKey]
+        let token = Defaults[.speechApiSecret]
+        guard !appId.isEmpty, !token.isEmpty else {
+            print("❌ 火山引擎语音识别未配置 AppID/Token")
+            return
+        }
+        startRecordingChunksForProvider(provider: "bytedance")
+    }
+
+    private func sendToBytedance(url: URL, appId: String, token: String) {
+        guard let audioData = try? Data(contentsOf: url) else { return }
+        var request = URLRequest(url: URL(string: "https://openspeech.bytedance.com/api/v1/asr?appid=\(appId)")!)
+        request.httpMethod = "POST"
+        request.setValue("Bearer; \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("audio/wav", forHTTPHeaderField: "Content-Type")
+        var body = Data()
+        body.append(Data([0x11, 0x10, 0x10, 0x00]))
+        body.append(audioData)
+        request.httpBody = body
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
+            guard let data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+            if let utterances = json["utterances"] as? [[String: Any]] {
+                let text = utterances.compactMap { $0["text"] as? String }.joined()
+                DispatchQueue.main.async {
+                    self?.liveText += text
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }
+        }.resume()
+    }
 
 }
