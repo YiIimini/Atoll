@@ -370,7 +370,7 @@ struct ChatInputView: View {
                 
                 Spacer()
                 
-                Button("Change", action: openModelSelection)
+                Button("模型设置", action: openModelSelection)
                     .font(.caption)
                     .foregroundColor(.blue)
             }
@@ -899,43 +899,90 @@ struct ScreenshotPopoverBackground: NSViewRepresentable {
 
 struct VoiceInputButton: View {
     @ObservedObject var screenAssistantManager = ScreenAssistantManager.shared
-    @State private var inputText: String = ""
+    @ObservedObject var voiceManager = VoiceConversationManager.shared
+    
+    private var isContinuousMode: Bool {
+        Defaults[.voiceMode] == .continuous
+    }
     
     var body: some View {
         Button(action: {
-            if screenAssistantManager.isRecording {
-                screenAssistantManager.finishVoiceInput()
+            if isContinuousMode {
+                // 实时对话模式：启动对话 + 律动球
+                if voiceManager.isActive {
+                    voiceManager.stopConversation()
+                } else {
+                    // AI 回复回调
+                    voiceManager.startConversation { message in
+                        if !message.isEmpty {
+                            screenAssistantManager.sendMessage(message)
+                        }
+                    }
+                }
             } else {
-                screenAssistantManager.startVoiceInput()
+                // 手动录音模式：原有行为
+                if screenAssistantManager.isRecording {
+                    screenAssistantManager.finishVoiceInput()
+                } else {
+                    screenAssistantManager.startVoiceInput()
+                }
             }
         }) {
             ZStack {
                 Circle()
-                    .fill(screenAssistantManager.isRecording ? Color.red : Color.blue.opacity(0.2))
+                    .fill(buttonBackground)
                     .frame(width: 32, height: 32)
                 
-                if screenAssistantManager.isTranscribing {
+                if !isContinuousMode && screenAssistantManager.isTranscribing {
                     ProgressView()
                         .scaleEffect(0.7)
                         .tint(.white)
                 } else {
-                    Image(systemName: screenAssistantManager.isRecording ? "stop.fill" : "mic.fill")
-                        .foregroundColor(screenAssistantManager.isRecording ? .white : .blue)
+                    Image(systemName: buttonIcon)
+                        .foregroundColor(buttonIconColor)
                         .font(.system(size: 14))
                 }
             }
         }
         .buttonStyle(PlainButtonStyle())
-        .help(screenAssistantManager.isRecording ? "停止录音并识别" : "语音输入")
-        .scaleEffect(screenAssistantManager.isRecording ? 1.1 : 1.0)
+        .help(buttonHelp)
+        .scaleEffect(isContinuousMode && voiceManager.isActive ? 1.15 : (screenAssistantManager.isRecording ? 1.1 : 1.0))
+        .animation(.easeInOut(duration: 0.3), value: voiceManager.isActive)
         .animation(.easeInOut(duration: 0.2), value: screenAssistantManager.isRecording)
         .onReceive(NotificationCenter.default.publisher(for: .voiceInputTranscribed)) { notif in
             if let text = notif.object as? String {
-                // 识别完成，填入输入框 — 用 UserDefaults 桥接
                 UserDefaults.standard.set(text, forKey: "voiceInputPending")
                 UserDefaults.standard.set(true, forKey: "voiceInputReady")
             }
         }
+    }
+    
+    private var buttonBackground: Color {
+        if isContinuousMode {
+            return voiceManager.isActive ? Color.purple.opacity(0.4) : Color.purple.opacity(0.15)
+        }
+        return screenAssistantManager.isRecording ? Color.red : Color.blue.opacity(0.2)
+    }
+    
+    private var buttonIcon: String {
+        if isContinuousMode {
+            return voiceManager.isActive ? "waveform.circle.fill" : "mic.fill"
+        }
+        return screenAssistantManager.isRecording ? "stop.fill" : "mic.fill"
+    }
+    
+    private var buttonIconColor: Color {
+        if isContinuousMode {
+            return voiceManager.isActive ? .purple : .blue
+        }
+        return screenAssistantManager.isRecording ? .white : .blue
+    }
+    
+    private var buttonHelp: String {
+        if isContinuousMode {
+            return voiceManager.isActive ? "停止实时对话" : "开始实时对话（律动球伴舞）"
+        }
+        return screenAssistantManager.isRecording ? "停止录音并识别" : "语音输入"
     }
 }
 
