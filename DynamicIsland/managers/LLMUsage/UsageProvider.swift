@@ -2,13 +2,16 @@ import Foundation
 import Defaults
 
 enum ProviderID: String, CaseIterable, Identifiable {
-    case claude, codex, cursor
+    case claude, codex, cursor, deepseek, qwen, moonshot
     var id: String { rawValue }
     var displayName: String {
         switch self {
         case .claude: return "Claude"
         case .codex: return "Codex"
         case .cursor: return "Cursor"
+        case .deepseek: return "DeepSeek"
+        case .qwen: return "通义千问"
+        case .moonshot: return "Moonshot"
         }
     }
     var enabledKey: Defaults.Key<Bool> {
@@ -16,6 +19,9 @@ enum ProviderID: String, CaseIterable, Identifiable {
         case .claude: return .enableClaudeProvider
         case .codex: return .enableCodexProvider
         case .cursor: return .enableCursorProvider
+        case .deepseek: return .enableDeepseekProvider
+        case .qwen: return .enableQwenProvider
+        case .moonshot: return .enableMoonshotProvider
         }
     }
 }

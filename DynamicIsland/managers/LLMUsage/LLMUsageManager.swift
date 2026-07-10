@@ -17,7 +17,7 @@ final class LLMUsageManager: ObservableObject {
         self.injectedProviders = providers
     }
 
-    private static let allProviders: [UsageProvider] = [ClaudeUsageProvider(), CodexUsageProvider(), CursorUsageProvider()]
+    private static let allProviders: [UsageProvider] = [ClaudeUsageProvider(), CodexUsageProvider(), CursorUsageProvider(), DeepseekUsageProvider(), QwenUsageProvider(), MoonshotUsageProvider()]
 
     private var enabledProviders: [UsageProvider] {
         if let injectedProviders { return injectedProviders }

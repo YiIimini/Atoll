@@ -400,6 +400,7 @@ class StatsManager: ObservableObject {
     @Published private(set) var diskTotals: DiskTotals = .zero
     @Published private(set) var networkInterfaces: [NetworkInterfaceMetrics] = []
     @Published private(set) var diskDevices: [DiskDeviceMetrics] = []
+    @Published private(set) var memoryPressure: MemoryPressure? = nil
     
     // Historical data for graphs (last 30 data points)
     @Published var cpuHistory: [Double] = []
@@ -1398,6 +1399,32 @@ class StatsManager: ObservableObject {
         return nonZeroValues.reduce(0, +) / Double(nonZeroValues.count)
     }
     
+    
+    /// 风扇转速显示（取首个有风扇数据的 GPU）
+    var fanSpeedDisplay: String? {
+        guard let fan = gpuDevices.first(where: { $0.fanSpeed != nil })?.fanSpeed else { return nil }
+        return "\(fan)%"
+    }
+    
+    /// 内存压力显示
+    var memoryPressureDisplay: String? {
+        guard let level = memoryPressure?.level else { return nil }
+        switch level {
+        case .normal: return "正常"
+        case .warning: return "注意"
+        case .critical: return "严重"
+        }
+    }
+    
+    /// GPU 温度列表（名称 + 温度）
+    var gpuTemperatureDisplays: [(name: String, temp: String)] {
+        gpuDevices.compactMap { device in
+            guard let temp = device.temperature else { return nil }
+            return (name: device.formattedVendorModel, temp: String(format: "%.0f°C", temp))
+        }
+    }
+    
+
     // MARK: - Clear History Method
     func clearHistory() {
         cpuHistory = Array(repeating: 0.0, count: maxHistoryPoints)

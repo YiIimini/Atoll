@@ -652,6 +652,13 @@ enum AIModelProvider: String, CaseIterable, Identifiable, Defaults.Serializable 
     case groq = "Groq"
     case deepseek = "DeepSeek"
     case openrouter = "OpenRouter"
+    // 国产大模型
+    case qwen = "通义千问"
+    case moonshot = "月之暗面"
+    case zhipu = "智谱 GLM"
+    case baichuan = "百川"
+    case yi = "零一万物"
+    case minimax = "Minimax"
     
     var id: String { self.rawValue }
     
@@ -668,6 +675,12 @@ enum AIModelProvider: String, CaseIterable, Identifiable, Defaults.Serializable 
         case .groq: return "Groq's fast inference for OpenAI-compatible models"
         case .deepseek: return "DeepSeek's cost-effective reasoning models"
         case .openrouter: return "OpenRouter — unified access to 200+ models"
+        case .qwen: return "阿里云通义千问，中文理解能力领先"
+        case .moonshot: return "月之暗面 Kimi，超长上下文处理"
+        case .zhipu: return "智谱 GLM，国产开源大模型"
+        case .baichuan: return "百川智能，金融与医疗领域擅长"
+        case .yi: return "零一万物，李开复创立的多模态模型"
+        case .minimax: return "Minimax，海螺 AI 语音与多模态"
         }
     }
     
@@ -727,6 +740,47 @@ enum AIModelProvider: String, CaseIterable, Identifiable, Defaults.Serializable 
                 AIModel(id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash (via OpenRouter)", supportsThinking: true),
                 AIModel(id: "deepseek/deepseek-chat", name: "DeepSeek V3 (via OpenRouter)", supportsThinking: false),
                 AIModel(id: "meta-llama/llama-3.3-70b-instruct", name: "Llama 3.3 70B (via OpenRouter)", supportsThinking: false)
+            ]
+        case .qwen:
+            return [
+                AIModel(id: "qwen-max", name: "Qwen Max", supportsThinking: false),
+                AIModel(id: "qwen-plus", name: "Qwen Plus", supportsThinking: false),
+                AIModel(id: "qwen-turbo", name: "Qwen Turbo", supportsThinking: false),
+                AIModel(id: "qwen3-235b-a22b", name: "Qwen3 235B", supportsThinking: true),
+                AIModel(id: "qwq-32b", name: "QwQ 32B (推理)", supportsThinking: true),
+            ]
+        case .moonshot:
+            return [
+                AIModel(id: "moonshot-v1-8k", name: "Moonshot v1 8K", supportsThinking: false),
+                AIModel(id: "moonshot-v1-32k", name: "Moonshot v1 32K", supportsThinking: false),
+                AIModel(id: "moonshot-v1-128k", name: "Moonshot v1 128K", supportsThinking: false),
+                AIModel(id: "kimi-latest", name: "Kimi Latest", supportsThinking: false),
+            ]
+        case .zhipu:
+            return [
+                AIModel(id: "glm-4-plus", name: "GLM-4 Plus", supportsThinking: false),
+                AIModel(id: "glm-4-flash", name: "GLM-4 Flash", supportsThinking: false),
+                AIModel(id: "glm-4-air", name: "GLM-4 Air", supportsThinking: false),
+                AIModel(id: "glm-4-long", name: "GLM-4 Long (128K)", supportsThinking: false),
+            ]
+        case .baichuan:
+            return [
+                AIModel(id: "Baichuan4", name: "Baichuan 4", supportsThinking: false),
+                AIModel(id: "Baichuan4-Air", name: "Baichuan 4 Air", supportsThinking: false),
+                AIModel(id: "Baichuan3-Turbo", name: "Baichuan 3 Turbo", supportsThinking: false),
+            ]
+        case .yi:
+            return [
+                AIModel(id: "yi-large", name: "Yi Large", supportsThinking: false),
+                AIModel(id: "yi-medium", name: "Yi Medium", supportsThinking: false),
+                AIModel(id: "yi-spark", name: "Yi Spark", supportsThinking: false),
+                AIModel(id: "yi-lightning", name: "Yi Lightning", supportsThinking: false),
+            ]
+        case .minimax:
+            return [
+                AIModel(id: "abab6.5s-chat", name: "ABAB 6.5s", supportsThinking: false),
+                AIModel(id: "abab6.5-chat", name: "ABAB 6.5", supportsThinking: false),
+                AIModel(id: "abab5.5-chat", name: "ABAB 5.5", supportsThinking: false),
             ]
         }
     }
@@ -1108,6 +1162,9 @@ extension Defaults.Keys {
     static let enableClaudeProvider = Key<Bool>("enableClaudeProvider", default: true)
     static let enableCodexProvider = Key<Bool>("enableCodexProvider", default: true)
     static let enableCursorProvider = Key<Bool>("enableCursorProvider", default: true)
+static let enableDeepseekProvider = Key<Bool>("enableDeepseekProvider", default: true)
+    static let enableQwenProvider = Key<Bool>("enableQwenProvider", default: true)
+    static let enableMoonshotProvider = Key<Bool>("enableMoonshotProvider", default: true)
     static let autoStartStatsMonitoring = Key<Bool>("autoStartStatsMonitoring", default: true)
     static let statsStopWhenNotchCloses = Key<Bool>("statsStopWhenNotchCloses", default: true)
     static let statsUpdateInterval = Key<Double>("statsUpdateInterval", default: 1.0)
