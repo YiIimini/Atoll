@@ -1236,6 +1236,13 @@ static let enableDeepseekProvider = Key<Bool>("enableDeepseekProvider", default:
     static let groqApiKey = Key<String>("groqApiKey", default: "")
     static let deepseekApiKey = Key<String>("deepseekApiKey", default: "")
     static let openrouterApiKey = Key<String>("openrouterApiKey", default: "")
+    // 国产大模型 API Keys
+    static let qwenApiKey = Key<String>("qwenApiKey", default: "")
+    static let moonshotApiKey = Key<String>("moonshotApiKey", default: "")
+    static let zhipuApiKey = Key<String>("zhipuApiKey", default: "")
+    static let baichuanApiKey = Key<String>("baichuanApiKey", default: "")
+    static let yiApiKey = Key<String>("yiApiKey", default: "")
+    static let minimaxApiKey = Key<String>("minimaxApiKey", default: "")
     static let selectedAIProvider = Key<AIModelProvider>("selectedAIProvider", default: .gemini)
     static let selectedAIModel = Key<AIModel?>("selectedAIModel", default: nil)
     static let enableThinkingMode = Key<Bool>("enableThinkingMode", default: false)

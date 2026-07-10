@@ -403,6 +403,18 @@ class ScreenAssistantManager: NSObject, ObservableObject {
             sendToDeepSeekAPI(message: message, files: files)
         case .openrouter:
             sendToOpenRouterAPI(message: message, files: files)
+        case .qwen:
+            sendToQwenAPI(message: message, files: files)
+        case .moonshot:
+            sendToMoonshotAPI(message: message, files: files)
+        case .zhipu:
+            sendToZhipuAPI(message: message, files: files)
+        case .baichuan:
+            sendToBaichuanAPI(message: message, files: files)
+        case .yi:
+            sendToYiAPI(message: message, files: files)
+        case .minimax:
+            sendToMinimaxAPI(message: message, files: files)
         }
     }
     
@@ -549,6 +561,188 @@ class ScreenAssistantManager: NSObject, ObservableObject {
             requestBody: buildOpenAIRequestBody(message: message, files: files, model: modelId),
             apiKey: apiKey,
             provider: .openrouter
+        )
+    }
+    
+    // MARK: - 国产大模型 API
+    
+    private func sendToQwenAPI(message: String, files: [ScreenAssistantFile]) {
+        let apiKey = Defaults[.qwenApiKey]
+        guard !apiKey.isEmpty else {
+            print("❌ ScreenAssistant: No Qwen API key configured")
+            addAssistantMessage("Error: 未配置通义千问 API Key，请在模型设置中配置。")
+            isLoading = false
+            return
+        }
+        let selectedModel = Defaults[.selectedAIModel]
+        let modelId: String
+        if let selectedId = selectedModel?.id,
+           AIModelProvider.qwen.supportedModels.contains(where: { $0.id == selectedId }) {
+            modelId = selectedId
+        } else {
+            modelId = "qwen-plus"
+        }
+        guard let url = URL(string: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions") else {
+            print("❌ ScreenAssistant: Invalid Qwen API URL")
+            addAssistantMessage("Error: Invalid API URL")
+            isLoading = false
+            return
+        }
+        performOpenAIRequest(
+            url: url,
+            requestBody: buildOpenAIRequestBody(message: message, files: files, model: modelId),
+            apiKey: apiKey,
+            provider: .qwen
+        )
+    }
+    
+    private func sendToMoonshotAPI(message: String, files: [ScreenAssistantFile]) {
+        let apiKey = Defaults[.moonshotApiKey]
+        guard !apiKey.isEmpty else {
+            print("❌ ScreenAssistant: No Moonshot API key configured")
+            addAssistantMessage("Error: 未配置月之暗面 API Key，请在模型设置中配置。")
+            isLoading = false
+            return
+        }
+        let selectedModel = Defaults[.selectedAIModel]
+        let modelId: String
+        if let selectedId = selectedModel?.id,
+           AIModelProvider.moonshot.supportedModels.contains(where: { $0.id == selectedId }) {
+            modelId = selectedId
+        } else {
+            modelId = "moonshot-v1-8k"
+        }
+        guard let url = URL(string: "https://api.moonshot.cn/v1/chat/completions") else {
+            print("❌ ScreenAssistant: Invalid Moonshot API URL")
+            addAssistantMessage("Error: Invalid API URL")
+            isLoading = false
+            return
+        }
+        performOpenAIRequest(
+            url: url,
+            requestBody: buildOpenAIRequestBody(message: message, files: files, model: modelId),
+            apiKey: apiKey,
+            provider: .moonshot
+        )
+    }
+    
+    private func sendToZhipuAPI(message: String, files: [ScreenAssistantFile]) {
+        let apiKey = Defaults[.zhipuApiKey]
+        guard !apiKey.isEmpty else {
+            print("❌ ScreenAssistant: No Zhipu API key configured")
+            addAssistantMessage("Error: 未配置智谱 API Key，请在模型设置中配置。")
+            isLoading = false
+            return
+        }
+        let selectedModel = Defaults[.selectedAIModel]
+        let modelId: String
+        if let selectedId = selectedModel?.id,
+           AIModelProvider.zhipu.supportedModels.contains(where: { $0.id == selectedId }) {
+            modelId = selectedId
+        } else {
+            modelId = "glm-4-flash"
+        }
+        guard let url = URL(string: "https://open.bigmodel.cn/api/paas/v4/chat/completions") else {
+            print("❌ ScreenAssistant: Invalid Zhipu API URL")
+            addAssistantMessage("Error: Invalid API URL")
+            isLoading = false
+            return
+        }
+        performOpenAIRequest(
+            url: url,
+            requestBody: buildOpenAIRequestBody(message: message, files: files, model: modelId),
+            apiKey: apiKey,
+            provider: .zhipu
+        )
+    }
+    
+    private func sendToBaichuanAPI(message: String, files: [ScreenAssistantFile]) {
+        let apiKey = Defaults[.baichuanApiKey]
+        guard !apiKey.isEmpty else {
+            print("❌ ScreenAssistant: No Baichuan API key configured")
+            addAssistantMessage("Error: 未配置百川 API Key，请在模型设置中配置。")
+            isLoading = false
+            return
+        }
+        let selectedModel = Defaults[.selectedAIModel]
+        let modelId: String
+        if let selectedId = selectedModel?.id,
+           AIModelProvider.baichuan.supportedModels.contains(where: { $0.id == selectedId }) {
+            modelId = selectedId
+        } else {
+            modelId = "Baichuan4-Air"
+        }
+        guard let url = URL(string: "https://api.baichuan-ai.com/v1/chat/completions") else {
+            print("❌ ScreenAssistant: Invalid Baichuan API URL")
+            addAssistantMessage("Error: Invalid API URL")
+            isLoading = false
+            return
+        }
+        performOpenAIRequest(
+            url: url,
+            requestBody: buildOpenAIRequestBody(message: message, files: files, model: modelId),
+            apiKey: apiKey,
+            provider: .baichuan
+        )
+    }
+    
+    private func sendToYiAPI(message: String, files: [ScreenAssistantFile]) {
+        let apiKey = Defaults[.yiApiKey]
+        guard !apiKey.isEmpty else {
+            print("❌ ScreenAssistant: No Yi API key configured")
+            addAssistantMessage("Error: 未配置零一万物 API Key，请在模型设置中配置。")
+            isLoading = false
+            return
+        }
+        let selectedModel = Defaults[.selectedAIModel]
+        let modelId: String
+        if let selectedId = selectedModel?.id,
+           AIModelProvider.yi.supportedModels.contains(where: { $0.id == selectedId }) {
+            modelId = selectedId
+        } else {
+            modelId = "yi-large"
+        }
+        guard let url = URL(string: "https://api.lingyiwanwu.com/v1/chat/completions") else {
+            print("❌ ScreenAssistant: Invalid Yi API URL")
+            addAssistantMessage("Error: Invalid API URL")
+            isLoading = false
+            return
+        }
+        performOpenAIRequest(
+            url: url,
+            requestBody: buildOpenAIRequestBody(message: message, files: files, model: modelId),
+            apiKey: apiKey,
+            provider: .yi
+        )
+    }
+    
+    private func sendToMinimaxAPI(message: String, files: [ScreenAssistantFile]) {
+        let apiKey = Defaults[.minimaxApiKey]
+        guard !apiKey.isEmpty else {
+            print("❌ ScreenAssistant: No Minimax API key configured")
+            addAssistantMessage("Error: 未配置 Minimax API Key，请在模型设置中配置。")
+            isLoading = false
+            return
+        }
+        let selectedModel = Defaults[.selectedAIModel]
+        let modelId: String
+        if let selectedId = selectedModel?.id,
+           AIModelProvider.minimax.supportedModels.contains(where: { $0.id == selectedId }) {
+            modelId = selectedId
+        } else {
+            modelId = "abab6.5s-chat"
+        }
+        guard let url = URL(string: "https://api.minimax.chat/v1/text/chatcompletion_v2") else {
+            print("❌ ScreenAssistant: Invalid Minimax API URL")
+            addAssistantMessage("Error: Invalid API URL")
+            isLoading = false
+            return
+        }
+        performOpenAIRequest(
+            url: url,
+            requestBody: buildOpenAIRequestBody(message: message, files: files, model: modelId),
+            apiKey: apiKey,
+            provider: .minimax
         )
     }
     
@@ -896,7 +1090,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         switch provider {
         case .gemini:
             parseGeminiResponse(data: data)
-        case .openai, .groq, .deepseek, .openrouter:
+        case .openai, .groq, .deepseek, .openrouter, .qwen, .moonshot, .zhipu, .baichuan, .yi, .minimax:
             parseOpenAIResponse(data: data)
         case .claude:
             parseClaudeResponse(data: data)
