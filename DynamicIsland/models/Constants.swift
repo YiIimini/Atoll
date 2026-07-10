@@ -732,7 +732,7 @@ enum AIModelProvider: String, CaseIterable, Identifiable, Defaults.Serializable 
     }
 }
 
-struct AIModel: Codable, Identifiable, Defaults.Serializable {
+struct AIModel: Codable, Identifiable, Defaults.Serializable, Hashable {
     let id: String
     let name: String
     let supportsThinking: Bool

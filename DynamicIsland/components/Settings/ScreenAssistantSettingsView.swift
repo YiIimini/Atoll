@@ -47,7 +47,7 @@ struct ScreenAssistantSettings: View {
                 Text("AI-powered assistant that can analyze files, images, and provide conversational help. Use Cmd+Shift+A to quickly access the assistant.")
             }
 
-            guard enableScreenAssistant else { return }
+            if enableScreenAssistant {
 
             // MARK: - Provider Selection
             Section {
@@ -217,6 +217,8 @@ struct ScreenAssistantSettings: View {
                     Text("Attached Files")
                 }
             }
+        }
+
         }
         .formStyle(.grouped)
         .navigationTitle("Screen Assistant")
