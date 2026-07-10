@@ -2,7 +2,7 @@ import Foundation
 import Defaults
 
 enum ProviderID: String, CaseIterable, Identifiable {
-    case claude, codex, cursor, deepseek, qwen, moonshot
+    case claude, codex, cursor, deepseek, qwen, moonshot, zhipu, baichuan, yi, minimax, spark
     var id: String { rawValue }
     var displayName: String {
         switch self {
@@ -12,6 +12,11 @@ enum ProviderID: String, CaseIterable, Identifiable {
         case .deepseek: return "DeepSeek"
         case .qwen: return "通义千问"
         case .moonshot: return "Moonshot"
+        case .zhipu: return "智谱 GLM"
+        case .baichuan: return "百川"
+        case .yi: return "零一万物"
+        case .minimax: return "Minimax"
+        case .spark: return "讯飞星火"
         }
     }
     var enabledKey: Defaults.Key<Bool> {
@@ -22,6 +27,11 @@ enum ProviderID: String, CaseIterable, Identifiable {
         case .deepseek: return .enableDeepseekProvider
         case .qwen: return .enableQwenProvider
         case .moonshot: return .enableMoonshotProvider
+        case .zhipu: return .enableZhipuProvider
+        case .baichuan: return .enableBaichuanProvider
+        case .yi: return .enableYiProvider
+        case .minimax: return .enableMinimaxProvider
+        case .spark: return .enableSparkProvider
         }
     }
 }

@@ -23,6 +23,11 @@ struct StatsSettings: View {
     @Default(.enableDeepseekProvider) var enableDeepseekProvider
     @Default(.enableQwenProvider) var enableQwenProvider
     @Default(.enableMoonshotProvider) var enableMoonshotProvider
+    @Default(.enableZhipuProvider) var enableZhipuProvider
+    @Default(.enableBaichuanProvider) var enableBaichuanProvider
+    @Default(.enableYiProvider) var enableYiProvider
+    @Default(.enableMinimaxProvider) var enableMinimaxProvider
+    @Default(.enableSparkProvider) var enableSparkProvider
 
     private func highlightID(_ title: String) -> String {
         SettingsTab.stats.highlightID(for: title)
@@ -112,6 +117,46 @@ struct StatsSettings: View {
                         }
                     }
                     .settingsHighlight(id: highlightID("Moonshot 供应商"))
+
+                    Defaults.Toggle(key: .enableZhipuProvider) {
+                        HStack(spacing: 4) {
+                            Text("智谱 GLM")
+                            customBadge(text: "国产")
+                        }
+                    }
+                    .settingsHighlight(id: highlightID("智谱 供应商"))
+
+                    Defaults.Toggle(key: .enableBaichuanProvider) {
+                        HStack(spacing: 4) {
+                            Text("百川智能")
+                            customBadge(text: "国产")
+                        }
+                    }
+                    .settingsHighlight(id: highlightID("百川 供应商"))
+
+                    Defaults.Toggle(key: .enableYiProvider) {
+                        HStack(spacing: 4) {
+                            Text("零一万物")
+                            customBadge(text: "国产")
+                        }
+                    }
+                    .settingsHighlight(id: highlightID("零一万物 供应商"))
+
+                    Defaults.Toggle(key: .enableMinimaxProvider) {
+                        HStack(spacing: 4) {
+                            Text("Minimax（海螺 AI）")
+                            customBadge(text: "国产")
+                        }
+                    }
+                    .settingsHighlight(id: highlightID("Minimax 供应商"))
+
+                    Defaults.Toggle(key: .enableSparkProvider) {
+                        HStack(spacing: 4) {
+                            Text("讯飞星火")
+                            customBadge(text: "国产")
+                        }
+                    }
+                    .settingsHighlight(id: highlightID("讯飞星火 供应商"))
                 } header: {
                     Text("LLM 供应商")
                 } footer: {
