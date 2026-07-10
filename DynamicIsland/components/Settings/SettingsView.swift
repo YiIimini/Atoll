@@ -18,7 +18,7 @@ import SwiftUIIntrospect
 import UniformTypeIdentifiers
 
 /// Groups for organizing settings tabs in the sidebar.
-private enum SettingsTabGroup: String, CaseIterable, Identifiable {
+enum SettingsTabGroup: String, CaseIterable, Identifiable {
     case core
     case mediaAndDisplay
     case system
@@ -45,7 +45,7 @@ private enum SettingsTabGroup: String, CaseIterable, Identifiable {
     }
 }
 
-private enum SettingsTab: String, CaseIterable, Identifiable {
+enum SettingsTab: String, CaseIterable, Identifiable {
     case general
     case liveActivities
     case appearance
