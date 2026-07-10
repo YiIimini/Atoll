@@ -385,6 +385,7 @@ struct SettingsView: View {
             .shelf,
             .downloads,
             .shortcuts,
+            .systemCleaner,
             // Developer
             .stats,
             .terminal,
