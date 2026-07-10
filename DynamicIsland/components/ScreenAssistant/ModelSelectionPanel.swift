@@ -117,7 +117,7 @@ class ModelSelectionPanel: NSPanel {
 
 // MARK: - Model Selection View
 struct ModelSelectionView: View {
-    private let primaryProviders: [AIModelProvider] = [.gemini, .openai, .claude, .local]
+    private let primaryProviders: [AIModelProvider] = [.gemini, .openai, .claude, .local, .deepseek, .openrouter]
     @State private var selectedProvider: AIModelProvider = Defaults[.selectedAIProvider]
     @State private var selectedModel: AIModel? = Defaults[.selectedAIModel]
     @State private var enableThinking: Bool = Defaults[.enableThinkingMode]
@@ -128,6 +128,8 @@ struct ModelSelectionView: View {
     @State private var claudeApiKey: String = Defaults[.claudeApiKey]
     @State private var localEndpoint: String = Defaults[.localModelEndpoint]
     @State private var groqApiKey: String = Defaults[.groqApiKey]
+    @State private var deepseekApiKey: String = Defaults[.deepseekApiKey]
+    @State private var openrouterApiKey: String = Defaults[.openrouterApiKey]
     
     @State private var showingApiKeyAlert = false
     
@@ -181,12 +183,6 @@ struct ModelSelectionView: View {
                             }
                         }
 
-                        ProviderCard(
-                            provider: .groq,
-                            isSelected: selectedProvider == .groq,
-                            onSelect: { selectProvider(.groq) },
-                            isWide: true
-                        )
                     }
                     
                     Divider()
@@ -255,7 +251,9 @@ struct ModelSelectionView: View {
                             openaiApiKey: $openaiApiKey,
                             claudeApiKey: $claudeApiKey,
                             localEndpoint: $localEndpoint,
-                            groqApiKey: $groqApiKey
+                            groqApiKey: $groqApiKey,
+                            deepseekApiKey: $deepseekApiKey,
+                            openrouterApiKey: $openrouterApiKey
                         )
                     }
                 }
@@ -303,6 +301,10 @@ struct ModelSelectionView: View {
             return !localEndpoint.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .groq:
             return !groqApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .deepseek:
+            return !deepseekApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .openrouter:
+            return !openrouterApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
     }
     
@@ -317,6 +319,8 @@ struct ModelSelectionView: View {
         claudeApiKey = Defaults[.claudeApiKey]
         localEndpoint = Defaults[.localModelEndpoint]
         groqApiKey = Defaults[.groqApiKey]
+        deepseekApiKey = Defaults[.deepseekApiKey]
+        openrouterApiKey = Defaults[.openrouterApiKey]
     }
     
     private func saveConfiguration() {
@@ -331,6 +335,10 @@ struct ModelSelectionView: View {
         Defaults[.claudeApiKey] = claudeApiKey
         Defaults[.localModelEndpoint] = localEndpoint
         Defaults[.groqApiKey] = groqApiKey
+        Defaults[.deepseekApiKey] = deepseekApiKey
+        Defaults[.openrouterApiKey] = openrouterApiKey
+            Defaults[.deepseekApiKey] = deepseekApiKey
+            Defaults[.openrouterApiKey] = openrouterApiKey
         
         closePanel()
         
@@ -413,6 +421,8 @@ struct ProviderCard: View {
         case .claude: return "doc.text"
         case .local: return "server.rack"
         case .groq: return "bolt.fill"
+        case .deepseek: return "wave.3.right"
+        case .openrouter: return "globe"
         }
     }
 }
@@ -473,6 +483,8 @@ struct ApiConfigurationSection: View {
     @Binding var claudeApiKey: String
     @Binding var localEndpoint: String
     @Binding var groqApiKey: String
+    @Binding var deepseekApiKey: String
+    @Binding var openrouterApiKey: String
     
     var body: some View {
         VStack(spacing: 12) {
@@ -515,6 +527,20 @@ struct ApiConfigurationSection: View {
                     placeholder: "Enter your Groq API key",
                     value: $groqApiKey,
                     helpText: "Get your API key from Groq Console"
+                )
+            case .deepseek:
+                ApiKeyField(
+                    title: "DeepSeek API Key",
+                    placeholder: "Enter your DeepSeek API key",
+                    value: $deepseekApiKey,
+                    helpText: "Get your API key from platform.deepseek.com"
+                )
+            case .openrouter:
+                ApiKeyField(
+                    title: "OpenRouter API Key",
+                    placeholder: "Enter your OpenRouter API key",
+                    value: $openrouterApiKey,
+                    helpText: "Get your API key from openrouter.ai/keys"
                 )
             }
         }

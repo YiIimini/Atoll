@@ -399,6 +399,10 @@ class ScreenAssistantManager: NSObject, ObservableObject {
             sendToLocalAPI(message: message, files: files)
         case .groq:
             sendToGroqAPI(message: message, files: files)
+        case .deepseek:
+            sendToDeepSeekAPI(message: message, files: files)
+        case .openrouter:
+            sendToOpenRouterAPI(message: message, files: files)
         }
     }
     
@@ -479,6 +483,72 @@ class ScreenAssistantManager: NSObject, ObservableObject {
             requestBody: buildOpenAIRequestBody(message: message, files: files, model: modelId),
             apiKey: apiKey,
             provider: .groq
+        )
+    }
+    
+    private func sendToDeepSeekAPI(message: String, files: [ScreenAssistantFile]) {
+        let apiKey = Defaults[.deepseekApiKey]
+        guard !apiKey.isEmpty else {
+            print("❌ ScreenAssistant: No DeepSeek API key configured")
+            addAssistantMessage("Error: No DeepSeek API key configured. Please set your API key in model settings.")
+            isLoading = false
+            return
+        }
+        
+        let selectedModel = Defaults[.selectedAIModel]
+        let modelId: String
+        if let selectedId = selectedModel?.id,
+           AIModelProvider.deepseek.supportedModels.contains(where: { $0.id == selectedId }) {
+            modelId = selectedId
+        } else {
+            modelId = "deepseek-chat"
+        }
+        
+        guard let url = URL(string: "https://api.deepseek.com/v1/chat/completions") else {
+            print("❌ ScreenAssistant: Invalid DeepSeek API URL")
+            addAssistantMessage("Error: Invalid API URL")
+            isLoading = false
+            return
+        }
+        
+        performOpenAIRequest(
+            url: url,
+            requestBody: buildOpenAIRequestBody(message: message, files: files, model: modelId),
+            apiKey: apiKey,
+            provider: .deepseek
+        )
+    }
+    
+    private func sendToOpenRouterAPI(message: String, files: [ScreenAssistantFile]) {
+        let apiKey = Defaults[.openrouterApiKey]
+        guard !apiKey.isEmpty else {
+            print("❌ ScreenAssistant: No OpenRouter API key configured")
+            addAssistantMessage("Error: No OpenRouter API key configured. Please set your API key in model settings.")
+            isLoading = false
+            return
+        }
+        
+        let selectedModel = Defaults[.selectedAIModel]
+        let modelId: String
+        if let selectedId = selectedModel?.id,
+           AIModelProvider.openrouter.supportedModels.contains(where: { $0.id == selectedId }) {
+            modelId = selectedId
+        } else {
+            modelId = "openai/gpt-4o"
+        }
+        
+        guard let url = URL(string: "https://openrouter.ai/api/v1/chat/completions") else {
+            print("❌ ScreenAssistant: Invalid OpenRouter API URL")
+            addAssistantMessage("Error: Invalid API URL")
+            isLoading = false
+            return
+        }
+        
+        performOpenAIRequest(
+            url: url,
+            requestBody: buildOpenAIRequestBody(message: message, files: files, model: modelId),
+            apiKey: apiKey,
+            provider: .openrouter
         )
     }
     
@@ -826,7 +896,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         switch provider {
         case .gemini:
             parseGeminiResponse(data: data)
-        case .openai, .groq:
+        case .openai, .groq, .deepseek, .openrouter:
             parseOpenAIResponse(data: data)
         case .claude:
             parseClaudeResponse(data: data)

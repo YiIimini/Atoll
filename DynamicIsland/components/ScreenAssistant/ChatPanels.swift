@@ -451,6 +451,8 @@ struct ChatInputView: View {
         case .claude: return "doc.text"
         case .local: return "server.rack"
         case .groq: return "bolt.fill"
+        case .deepseek: return "wave.3.right"
+        case .openrouter: return "globe"
         }
     }
     
@@ -475,6 +477,10 @@ struct ChatInputView: View {
             apiKey = "local"
         case .groq:
             apiKey = Defaults[.groqApiKey]
+        case .deepseek:
+            apiKey = Defaults[.deepseekApiKey]
+        case .openrouter:
+            apiKey = Defaults[.openrouterApiKey]
         }
         
         if apiKey.isEmpty {

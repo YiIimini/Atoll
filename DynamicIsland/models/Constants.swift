@@ -650,6 +650,8 @@ enum AIModelProvider: String, CaseIterable, Identifiable, Defaults.Serializable 
     case claude = "Claude"
     case local = "Local Model"
     case groq = "Groq"
+    case deepseek = "DeepSeek"
+    case openrouter = "OpenRouter"
     
     var id: String { self.rawValue }
     
@@ -664,6 +666,8 @@ enum AIModelProvider: String, CaseIterable, Identifiable, Defaults.Serializable 
         case .claude: return "Anthropic's Claude with strong analytical skills"
         case .local: return "Local AI model (Ollama or similar)"
         case .groq: return "Groq's fast inference for OpenAI-compatible models"
+        case .deepseek: return "DeepSeek's cost-effective reasoning models"
+        case .openrouter: return "OpenRouter — unified access to 200+ models"
         }
     }
     
@@ -710,6 +714,19 @@ enum AIModelProvider: String, CaseIterable, Identifiable, Defaults.Serializable 
                 AIModel(id: "llama-3.1-8b-instant", name: "Llama 3.1 8B Instant", supportsThinking: false),
                 AIModel(id: "qwen-qwq-32b", name: "Qwen QWQ 32B", supportsThinking: false),
                 AIModel(id: "mixtral-8x7b-32768", name: "Mixtral 8x7B", supportsThinking: false)
+            ]
+        case .deepseek:
+            return [
+                AIModel(id: "deepseek-chat", name: "DeepSeek V3", supportsThinking: false),
+                AIModel(id: "deepseek-reasoner", name: "DeepSeek R1", supportsThinking: true)
+            ]
+        case .openrouter:
+            return [
+                AIModel(id: "openai/gpt-4o", name: "GPT-4o (via OpenRouter)", supportsThinking: false),
+                AIModel(id: "anthropic/claude-3.5-sonnet", name: "Claude 3.5 Sonnet (via OpenRouter)", supportsThinking: false),
+                AIModel(id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash (via OpenRouter)", supportsThinking: true),
+                AIModel(id: "deepseek/deepseek-chat", name: "DeepSeek V3 (via OpenRouter)", supportsThinking: false),
+                AIModel(id: "meta-llama/llama-3.3-70b-instruct", name: "Llama 3.3 70B (via OpenRouter)", supportsThinking: false)
             ]
         }
     }
@@ -1160,6 +1177,8 @@ extension Defaults.Keys {
     static let openaiApiKey = Key<String>("openaiApiKey", default: "")
     static let claudeApiKey = Key<String>("claudeApiKey", default: "")
     static let groqApiKey = Key<String>("groqApiKey", default: "")
+    static let deepseekApiKey = Key<String>("deepseekApiKey", default: "")
+    static let openrouterApiKey = Key<String>("openrouterApiKey", default: "")
     static let selectedAIProvider = Key<AIModelProvider>("selectedAIProvider", default: .gemini)
     static let selectedAIModel = Key<AIModel?>("selectedAIModel", default: nil)
     static let enableThinkingMode = Key<Bool>("enableThinkingMode", default: false)
