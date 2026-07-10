@@ -102,7 +102,8 @@ Atoll 设置窗口分为 7 组、21 个标签页：
 - 媒体无响应：确认播放器正在运行且已授予音乐权限。
 
 ## 致谢
-本项目基于 [Boring.Notch](https://github.com/TheBoredTeam/boring.notch) 构建，衷心感谢原作者的杰出工作。
+
+本仓库 Fork 自 [Ebullioscopic/Atoll](https://github.com/Ebullioscopic/Atoll)，原作者 **Hariharan Mudaliar**，基于其杰出工作在 GPL v3 许可下进行二次开发。
 
 同时也感谢以下开源项目的贡献与启发：
 [Boring.Notch](https://github.com/TheBoredTeam/boring.notch) · [Alcove](https://tryalcove.com) · [Stats](https://github.com/exelban/stats) · [Open Meteo](https://open-meteo.com) · [SkyLightWindow](https://github.com/Lakr233/SkyLightWindow) · [rtaudio](https://github.com/ZephyrCodesStuff/rtaudio) · [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) · [DynamicNotch](https://github.com/jackson-storm/DynamicNotch) · [OpenUsage](https://github.com/robinebers/openusage) · [OpenRouter](https://openrouter.ai)
