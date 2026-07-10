@@ -1062,6 +1062,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         exportLogsItem.target = self
         toolsSubmenu.addItem(exportLogsItem)
 
+        toolsSubmenu.addItem(NSMenuItem.separator())
+
+        let systemCleanerItem = NSMenuItem(title: "System Cleaner", action: #selector(openSystemCleaner), keyEquivalent: "")
+        systemCleanerItem.target = self
+        toolsSubmenu.addItem(systemCleanerItem)
+
         toolsMenuItem.submenu = toolsSubmenu
         mainMenu.insertItem(toolsMenuItem, at: insertionIndex + 3)
 
@@ -1137,6 +1143,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         for item in loggingSubmenu.items {
             item.state = (item.tag == level.rawValue) ? NSControl.StateValue.on : NSControl.StateValue.off
         }
+    }
+
+    @objc private func openSystemCleaner() {
+        SystemCleanerPanelManager.shared.show()
     }
 
     @objc private func exportLogs() {
