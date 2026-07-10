@@ -21,6 +21,7 @@ import SwiftUI
 import AVFoundation
 import Defaults
 import Foundation
+import Speech
 
 // Chat message model
 struct ChatMessage: Identifiable, Codable {
@@ -115,11 +116,17 @@ class ScreenAssistantManager: NSObject, ObservableObject {
     @Published var attachedFiles: [ScreenAssistantFile] = []
     @Published var isRecording: Bool = false
     @Published var recordingDuration: TimeInterval = 0
+    // 语音识别
+    @Published var isTranscribing: Bool = false
+    @Published var transcribedText: String = ""
+    // TTS
+    @Published var isSpeaking: Bool = false
     @Published var chatMessages: [ChatMessage] = []
     @Published var isLoading: Bool = false
     
     private var audioRecorder: AVAudioRecorder?
     private var recordingTimer: Timer?
+    private var _speechSynthesizer: AVSpeechSynthesizer?
     private var activeRequest: URLSessionTask?
     
     // Panel management
@@ -1450,7 +1457,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         clearAllFiles()
     }
     
-    private func addAssistantMessage(_ content: String) {
+    func addAssistantMessage(_ content: String) {
         print("💬 ScreenAssistant: Adding assistant message: \(content.prefix(100))...")
         let assistantMessage = ChatMessage(content: content, isFromUser: false)
         chatMessages.append(assistantMessage)
@@ -1577,4 +1584,117 @@ extension DateFormatter {
         formatter.timeStyle = .short
         return formatter
     }()
+}
+
+// MARK: - 语音对话扩展
+
+extension ScreenAssistantManager: SFSpeechRecognizerDelegate {
+    
+    private static var speechRecognizer: SFSpeechRecognizer = {
+        let locale = Locale(identifier: "zh-CN")
+        return SFSpeechRecognizer(locale: locale) ?? SFSpeechRecognizer()!
+    }()
+    
+    private var speechRecognizer: SFSpeechRecognizer {
+        Self.speechRecognizer
+    }
+    
+    private var speechSynthesizer: AVSpeechSynthesizer {
+        if _speechSynthesizer == nil {
+            _speechSynthesizer = AVSpeechSynthesizer()
+        }
+        return _speechSynthesizer!
+    }
+    
+
+    /// 开始语音输入：录音 → 识别 → 填入输入框
+    func startVoiceInput() {
+        requestSpeechPermission { [weak self] granted in
+            guard let self, granted else {
+                print("❌ 语音识别权限未授权")
+                return
+            }
+            self.startRecording()
+        }
+    }
+    
+    /// 停止录音并开始语音识别
+    func finishVoiceInput() {
+        stopRecording()
+        transcribeLastRecording()
+    }
+    
+    private func transcribeLastRecording() {
+        let files = (try? FileManager.default.contentsOfDirectory(at: Self.audioDataDirectory, includingPropertiesForKeys: nil)) ?? []
+        guard let latest = files.filter({ $0.pathExtension == "m4a" }).sorted(by: { $0.lastPathComponent > $1.lastPathComponent }).first else {
+            return
+        }
+        
+        isTranscribing = true
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        // SFSpeechRecognizer for file-based recognition uses a URL-based request on macOS
+        let recognizer = speechRecognizer
+        recognizer.delegate = self
+        
+        // For macOS: use SFSpeechURLRecognitionRequest for file-based recognition
+        let urlRequest = SFSpeechURLRecognitionRequest(url: latest)
+        
+        recognizer.recognitionTask(with: urlRequest) { [weak self] result, error in
+            DispatchQueue.main.async {
+                self?.isTranscribing = false
+                if let text = result?.bestTranscription.formattedString, !text.isEmpty {
+                    self?.transcribedText = text
+                    print("🎤 识别结果: \(text)")
+                    // 通过通知传递给 UI
+                    NotificationCenter.default.post(name: .voiceInputTranscribed, object: text)
+                } else if let error {
+                    print("❌ 语音识别失败: \(error)")
+                }
+            }
+        }
+    }
+    
+    /// 朗读文字（TTS）
+    func speakText(_ text: String) {
+        if isSpeaking {
+            speechSynthesizer.stopSpeaking(at: .immediate)
+            isSpeaking = false
+            return
+        }
+        
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.voice = AVSpeechSynthesisVoice(language: "zh-CN")
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9 // 稍慢一点更清晰
+        utterance.pitchMultiplier = 1.0
+        utterance.volume = 0.8
+        
+        isSpeaking = true
+        speechSynthesizer.speak(utterance)
+        
+        // 监听播放完成
+        DispatchQueue.global().async { [weak self] in
+            while self?.speechSynthesizer.isSpeaking == true {
+                Thread.sleep(forTimeInterval: 0.1)
+            }
+            DispatchQueue.main.async {
+                self?.isSpeaking = false
+            }
+        }
+    }
+    
+    private func requestSpeechPermission(completion: @escaping (Bool) -> Void) {
+        SFSpeechRecognizer.requestAuthorization { status in
+            DispatchQueue.main.async {
+                switch status {
+                case .authorized: completion(true)
+                case .denied, .restricted, .notDetermined: completion(false)
+                @unknown default: completion(false)
+                }
+            }
+        }
+    }
+}
+
+extension Notification.Name {
+    static let voiceInputTranscribed = Notification.Name("voiceInputTranscribed")
 }

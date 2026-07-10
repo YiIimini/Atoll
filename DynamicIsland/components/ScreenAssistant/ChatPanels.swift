@@ -260,12 +260,14 @@ struct ChatMessagesView: View {
                                     .foregroundColor(.blue.opacity(0.6))
                                 
                                 VStack(spacing: 8) {
+                                    DreamOrbView(size: 80)
+                                        .padding(.bottom, 4)
                                     Text("AI Assistant")
                                         .font(.title)
                                         .fontWeight(.bold)
                                         .foregroundColor(.primary)
                                     
-                                    Text("Start a conversation to see your chat history here")
+                                    Text("开始对话，律动球将为你伴舞")
                                         .font(.body)
                                         .foregroundColor(.secondary)
                                         .multilineTextAlignment(.center)
@@ -280,16 +282,20 @@ struct ChatMessagesView: View {
                             }
                             
                             if screenAssistantManager.isLoading {
-                                HStack(spacing: 12) {
-                                    ProgressView()
-                                        .scaleEffect(0.8)
-                                    Text("AI is thinking...")
-                                        .font(.body)
-                                        .foregroundColor(.secondary)
+                                HStack(spacing: 16) {
+                                    DreamOrbView(size: 48)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("AI 正在思考...")
+                                            .font(.body.weight(.medium))
+                                            .foregroundColor(.primary.opacity(0.8))
+                                        Text("律动球正在吸收智慧")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
                                     Spacer()
                                 }
                                 .padding(.horizontal, 20)
-                                .padding(.vertical, 12)
+                                .padding(.vertical, 16)
                             }
                         }
                     }
@@ -327,6 +333,9 @@ struct ChatInputView: View {
     @State private var messageText = ""
     @State private var isDraggingFiles = false
     @State private var showingApiKeyAlert = false
+    @StateObject private var cmdExecutor = SystemCommandExecutor.shared
+    @State private var pendingCmd: SystemCommand? = nil
+    @State private var pendingCmdArg: String? = nil
     @FocusState private var isTextFieldFocused: Bool
     
     // Current model information
@@ -416,8 +425,8 @@ struct ChatInputView: View {
                 .buttonStyle(PlainButtonStyle())
                 .help("Choose AI model")
                 
-                // Recording button
-                RecordingButton()
+                // 语音输入按钮
+                VoiceInputButton()
                 
                 // Send button
                 Button(action: sendMessage) {
@@ -447,9 +456,33 @@ struct ChatInputView: View {
         } message: {
             Text("Please configure your API key for the selected AI provider in model settings.")
         }
-        .onAppear {
+        .alert(item: $pendingCmd) { cmd in
+            Alert(
+                title: Text(cmd.rawValue),
+                message: Text("确认执行：\(cmd.description)"),
+                primaryButton: .destructive(Text("执行")) {
+                    let result = cmdExecutor.execute(cmd, arg: pendingCmdArg)
+                    screenAssistantManager.addAssistantMessage(result)
+                    messageText = ""
+                },
+                secondaryButton: .cancel(Text("取消")) {
+                    messageText = ""
+                }
+            )
+        }
+.onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isTextFieldFocused = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("voiceInputReady"))) { _ in
+            if UserDefaults.standard.bool(forKey: "voiceInputReady") {
+                let text = UserDefaults.standard.string(forKey: "voiceInputPending") ?? ""
+                UserDefaults.standard.set(false, forKey: "voiceInputReady")
+                UserDefaults.standard.removeObject(forKey: "voiceInputPending")
+                if !text.isEmpty {
+                    messageText = text
+                }
             }
         }
     }
@@ -522,6 +555,13 @@ struct ChatInputView: View {
             return
         }
         
+        // Check for system command first
+        if let (cmd, arg) = CommandMatcher.match(userMessage) {
+            pendingCmd = cmd
+            pendingCmdArg = arg
+            return
+        }
+        
         // Send message through manager
         screenAssistantManager.sendMessage(userMessage)
         messageText = ""
@@ -553,6 +593,7 @@ struct ChatInputView: View {
 
 // MARK: - Enhanced Chat Message Bubble (No Auto-Streaming)
 struct StreamingChatMessageBubble: View {
+    @ObservedObject var _screenAssistantManager = ScreenAssistantManager.shared
     let message: ChatMessage
     
     var body: some View {
@@ -620,6 +661,14 @@ struct StreamingChatMessageBubble: View {
                             .fill(message.isFromUser ? Color.blue : Color.gray.opacity(0.15))
                     )
                     .foregroundColor(message.isFromUser ? .white : .primary)
+                
+                // 朗读按钮（仅 AI 回复显示）
+                if !message.isFromUser && !message.content.isEmpty {
+                    HStack {
+                        SpeakButton(text: message.content, screenAssistantManager: _screenAssistantManager)
+                        Spacer()
+                    }
+                }
             }
             .frame(maxWidth: 400, alignment: message.isFromUser ? .trailing : .leading)
             
@@ -843,4 +892,152 @@ struct ScreenshotPopoverBackground: NSViewRepresentable {
             ScreenCaptureVisibilityManager.shared.unregister(window)
         }
     }
+}
+
+// MARK: - 语音输入按钮（语音识别 → 转文字输入）
+
+struct VoiceInputButton: View {
+    @ObservedObject var screenAssistantManager = ScreenAssistantManager.shared
+    @State private var inputText: String = ""
+    
+    var body: some View {
+        Button(action: {
+            if screenAssistantManager.isRecording {
+                screenAssistantManager.finishVoiceInput()
+            } else {
+                screenAssistantManager.startVoiceInput()
+            }
+        }) {
+            ZStack {
+                Circle()
+                    .fill(screenAssistantManager.isRecording ? Color.red : Color.blue.opacity(0.2))
+                    .frame(width: 32, height: 32)
+                
+                if screenAssistantManager.isTranscribing {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                        .tint(.white)
+                } else {
+                    Image(systemName: screenAssistantManager.isRecording ? "stop.fill" : "mic.fill")
+                        .foregroundColor(screenAssistantManager.isRecording ? .white : .blue)
+                        .font(.system(size: 14))
+                }
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+        .help(screenAssistantManager.isRecording ? "停止录音并识别" : "语音输入")
+        .scaleEffect(screenAssistantManager.isRecording ? 1.1 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: screenAssistantManager.isRecording)
+        .onReceive(NotificationCenter.default.publisher(for: .voiceInputTranscribed)) { notif in
+            if let text = notif.object as? String {
+                // 识别完成，填入输入框 — 用 UserDefaults 桥接
+                UserDefaults.standard.set(text, forKey: "voiceInputPending")
+                UserDefaults.standard.set(true, forKey: "voiceInputReady")
+            }
+        }
+    }
+}
+
+// MARK: - AI 回复朗读按钮
+
+struct SpeakButton: View {
+    let text: String
+    @ObservedObject var screenAssistantManager = ScreenAssistantManager.shared
+    
+    var body: some View {
+        Button(action: {
+            screenAssistantManager.speakText(text)
+        }) {
+            Image(systemName: screenAssistantManager.isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
+                .font(.system(size: 13))
+                .foregroundColor(screenAssistantManager.isSpeaking ? .green : .secondary)
+                .padding(6)
+                .background(Color.gray.opacity(0.1))
+                .clipShape(Circle())
+        }
+        .buttonStyle(PlainButtonStyle())
+        .help(screenAssistantManager.isSpeaking ? "停止朗读" : "朗读回复")
+    }
+}
+
+// MARK: - 梦幻律动球（AI 思考时的动态视觉）
+
+struct DreamOrbView: View {
+    let size: CGFloat
+    @State private var phase: Double = 0
+    @State private var hue: Double = 0.6
+    
+    private let timer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
+    
+    var body: some View {
+        ZStack {
+            // 外层光晕 - 缓慢扩散收缩
+            Circle()
+                .fill(
+                    AngularGradient(
+                        colors: [.purple.opacity(0.3), .blue.opacity(0.3), .cyan.opacity(0.3), .purple.opacity(0.3)],
+                        center: .center,
+                        angle: .degrees(phase * 180)
+                    )
+                )
+                .frame(width: size * 1.6, height: size * 1.6)
+                .blur(radius: size * 0.3)
+                .scaleEffect(1 + 0.15 * sin(phase * 1.3))
+            
+            // 中层流动环
+            Circle()
+                .stroke(
+                    AngularGradient(
+                        colors: [.blue, .purple, .cyan, .blue],
+                        center: .center,
+                        angle: .degrees(phase * 360)
+                    ),
+                    lineWidth: 2.5
+                )
+                .frame(width: size * 1.2, height: size * 1.2)
+                .blur(radius: 1)
+                .rotationEffect(.degrees(phase * 180))
+            
+            // 主球体 - 多层渐变
+            ZStack {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color(hue: hue, saturation: 0.6, brightness: 0.9),
+                                     Color(hue: hue + 0.05, saturation: 0.8, brightness: 0.6),
+                                     Color(hue: hue + 0.1, saturation: 0.7, brightness: 0.3)],
+                            center: .topLeading,
+                            startRadius: 0,
+                            endRadius: size * 0.7
+                        )
+                    )
+                
+                // 高光
+                Circle()
+                    .fill(.white.opacity(0.15))
+                    .frame(width: size * 0.35, height: size * 0.35)
+                    .offset(x: -size * 0.12, y: -size * 0.15)
+                    .blur(radius: size * 0.04)
+            }
+            .frame(width: size, height: size)
+            .scaleEffect(1 + 0.06 * sin(phase * 2.1))
+            .shadow(color: Color(hue: hue, saturation: 0.8, brightness: 0.6).opacity(0.5),
+                    radius: size * 0.25, x: 0, y: 0)
+            .shadow(color: .purple.opacity(0.3), radius: size * 0.15, x: 0, y: 0)
+        }
+        .frame(width: size * 1.6, height: size * 1.6)
+        .onReceive(timer) { _ in
+            withAnimation(.linear(duration: 0.05)) {
+                phase += 0.008
+                hue = 0.6 + 0.08 * sin(phase * 0.7)
+            }
+        }
+    }
+}
+
+// MARK: - 独立律动球窗口（全局快捷键唤起时使用）
+#Preview {
+    DreamOrbView(size: 100)
+        .frame(width: 200, height: 200)
+        .background(Color.black)
 }
