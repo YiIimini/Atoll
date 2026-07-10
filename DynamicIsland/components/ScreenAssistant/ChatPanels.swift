@@ -453,6 +453,12 @@ struct ChatInputView: View {
         case .groq: return "bolt.fill"
         case .deepseek: return "wave.3.right"
         case .openrouter: return "globe"
+        case .qwen: return "text.bubble"
+        case .moonshot: return "moon.stars"
+        case .zhipu: return "brain.head.profile"
+        case .baichuan: return "scroll"
+        case .yi: return "sparkle.magnifyingglass"
+        case .minimax: return "waveform.and.mic"
         }
     }
     
@@ -481,6 +487,18 @@ struct ChatInputView: View {
             apiKey = Defaults[.deepseekApiKey]
         case .openrouter:
             apiKey = Defaults[.openrouterApiKey]
+        case .qwen:
+            apiKey = Defaults[.qwenApiKey]
+        case .moonshot:
+            apiKey = Defaults[.moonshotApiKey]
+        case .zhipu:
+            apiKey = Defaults[.zhipuApiKey]
+        case .baichuan:
+            apiKey = Defaults[.baichuanApiKey]
+        case .yi:
+            apiKey = Defaults[.yiApiKey]
+        case .minimax:
+            apiKey = Defaults[.minimaxApiKey]
         }
         
         if apiKey.isEmpty {

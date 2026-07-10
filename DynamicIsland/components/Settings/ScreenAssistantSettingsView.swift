@@ -321,6 +321,12 @@ struct ScreenAssistantSettings: View {
         case .groq:       return $groqApiKey
         case .deepseek:   return $deepseekApiKey
         case .openrouter: return $openrouterApiKey
+        case .qwen:     return $qwenApiKey
+        case .moonshot: return $moonshotApiKey
+        case .zhipu:    return $zhipuApiKey
+        case .baichuan: return $baichuanApiKey
+        case .yi:       return $yiApiKey
+        case .minimax:  return $minimaxApiKey
         case .local:      return .constant("")
         }
     }

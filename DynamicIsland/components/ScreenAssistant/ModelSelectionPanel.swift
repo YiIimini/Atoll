@@ -130,6 +130,12 @@ struct ModelSelectionView: View {
     @State private var groqApiKey: String = Defaults[.groqApiKey]
     @State private var deepseekApiKey: String = Defaults[.deepseekApiKey]
     @State private var openrouterApiKey: String = Defaults[.openrouterApiKey]
+    @State private var qwenApiKey: String = Defaults[.qwenApiKey]
+    @State private var moonshotApiKey: String = Defaults[.moonshotApiKey]
+    @State private var zhipuApiKey: String = Defaults[.zhipuApiKey]
+    @State private var baichuanApiKey: String = Defaults[.baichuanApiKey]
+    @State private var yiApiKey: String = Defaults[.yiApiKey]
+    @State private var minimaxApiKey: String = Defaults[.minimaxApiKey]
     
     @State private var showingApiKeyAlert = false
     
@@ -253,7 +259,13 @@ struct ModelSelectionView: View {
                             localEndpoint: $localEndpoint,
                             groqApiKey: $groqApiKey,
                             deepseekApiKey: $deepseekApiKey,
-                            openrouterApiKey: $openrouterApiKey
+                            openrouterApiKey: $openrouterApiKey,
+                            qwenApiKey: $qwenApiKey,
+                            moonshotApiKey: $moonshotApiKey,
+                            zhipuApiKey: $zhipuApiKey,
+                            baichuanApiKey: $baichuanApiKey,
+                            yiApiKey: $yiApiKey,
+                            minimaxApiKey: $minimaxApiKey
                         )
                     }
                 }
@@ -305,6 +317,18 @@ struct ModelSelectionView: View {
             return !deepseekApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .openrouter:
             return !openrouterApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .qwen:
+            return !qwenApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .moonshot:
+            return !moonshotApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .zhipu:
+            return !zhipuApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .baichuan:
+            return !baichuanApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .yi:
+            return !yiApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .minimax:
+            return !minimaxApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
     }
     
@@ -321,6 +345,12 @@ struct ModelSelectionView: View {
         groqApiKey = Defaults[.groqApiKey]
         deepseekApiKey = Defaults[.deepseekApiKey]
         openrouterApiKey = Defaults[.openrouterApiKey]
+        qwenApiKey = Defaults[.qwenApiKey]
+        moonshotApiKey = Defaults[.moonshotApiKey]
+        zhipuApiKey = Defaults[.zhipuApiKey]
+        baichuanApiKey = Defaults[.baichuanApiKey]
+        yiApiKey = Defaults[.yiApiKey]
+        minimaxApiKey = Defaults[.minimaxApiKey]
     }
     
     private func saveConfiguration() {
@@ -423,6 +453,12 @@ struct ProviderCard: View {
         case .groq: return "bolt.fill"
         case .deepseek: return "wave.3.right"
         case .openrouter: return "globe"
+        case .qwen: return "text.bubble"
+        case .moonshot: return "moon.stars"
+        case .zhipu: return "brain.head.profile"
+        case .baichuan: return "scroll"
+        case .yi: return "sparkle.magnifyingglass"
+        case .minimax: return "waveform.and.mic"
         }
     }
 }
@@ -485,6 +521,12 @@ struct ApiConfigurationSection: View {
     @Binding var groqApiKey: String
     @Binding var deepseekApiKey: String
     @Binding var openrouterApiKey: String
+    @Binding var qwenApiKey: String
+    @Binding var moonshotApiKey: String
+    @Binding var zhipuApiKey: String
+    @Binding var baichuanApiKey: String
+    @Binding var yiApiKey: String
+    @Binding var minimaxApiKey: String
     
     var body: some View {
         VStack(spacing: 12) {
@@ -541,6 +583,48 @@ struct ApiConfigurationSection: View {
                     placeholder: "Enter your OpenRouter API key",
                     value: $openrouterApiKey,
                     helpText: "Get your API key from openrouter.ai/keys"
+                )
+            case .qwen:
+                ApiKeyField(
+                    title: "通义千问 API Key",
+                    placeholder: "输入通义千问 API Key",
+                    value: $qwenApiKey,
+                    helpText: "从阿里云百炼平台获取"
+                )
+            case .moonshot:
+                ApiKeyField(
+                    title: "月之暗面 API Key",
+                    placeholder: "输入 Moonshot API Key",
+                    value: $moonshotApiKey,
+                    helpText: "从 platform.moonshot.cn 获取"
+                )
+            case .zhipu:
+                ApiKeyField(
+                    title: "智谱 API Key",
+                    placeholder: "输入智谱 API Key",
+                    value: $zhipuApiKey,
+                    helpText: "从 open.bigmodel.cn 获取"
+                )
+            case .baichuan:
+                ApiKeyField(
+                    title: "百川 API Key",
+                    placeholder: "输入百川 API Key",
+                    value: $baichuanApiKey,
+                    helpText: "从 platform.baichuan-ai.com 获取"
+                )
+            case .yi:
+                ApiKeyField(
+                    title: "零一万物 API Key",
+                    placeholder: "输入零一万物 API Key",
+                    value: $yiApiKey,
+                    helpText: "从 platform.lingyiwanwu.com 获取"
+                )
+            case .minimax:
+                ApiKeyField(
+                    title: "Minimax API Key",
+                    placeholder: "输入 Minimax API Key",
+                    value: $minimaxApiKey,
+                    helpText: "从 platform.minimax.chat 获取"
                 )
             }
         }
