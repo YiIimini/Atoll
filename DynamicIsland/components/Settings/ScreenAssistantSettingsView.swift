@@ -20,6 +20,10 @@ struct ScreenAssistantSettings: View {
     @Default(.speechApiKey) var speechApiKey
     @Default(.speechApiSecret) var speechApiSecret
     @Default(.voiceMode) var voiceMode
+    @Default(.ttsProvider) var ttsProvider
+    @Default(.ttsApiKey) var ttsApiKey
+    @Default(.ttsApiSecret) var ttsApiSecret
+    @Default(.ttsVoiceType) var ttsVoiceType
     @Default(.localModelEndpoint) var localModelEndpoint
 
     // Per-provider API keys
@@ -183,6 +187,59 @@ struct ScreenAssistantSettings: View {
                         .foregroundStyle(.secondary).font(.caption)
                 } else if speechProvider == .openaiWhisper {
                     Text("使用 OpenAI Whisper API 进行语音识别。需填写 API Key（与 ChatGPT Key 相同）。\n实时对话模式使用流式上传，每 3 秒识别一次。")
+                        .foregroundStyle(.secondary).font(.caption)
+                } else if speechProvider == .bytedance {
+                    Text("使用火山引擎（豆包）语音识别。需填写 AppID + AccessToken。\n实时对话模式每 4 秒上传一次，识别准度高。")
+                        .foregroundStyle(.secondary).font(.caption)
+                } else if speechProvider == .alibabaNls || speechProvider == .baiduAsr || speechProvider == .iflytek {
+                    Text("使用第三方语音识别引擎，需填写对应的 API Key/AppKey。")
+                        .foregroundStyle(.secondary).font(.caption)
+                }
+            }
+
+            // MARK: - TTS 语音合成
+            Section {
+                Picker("语音合成引擎", selection: $ttsProvider) {
+                    ForEach(TTSSynthesisProvider.allCases) { provider in
+                        Text(provider.rawValue).tag(provider)
+                    }
+                }
+                .settingsHighlight(id: highlightID("TTS Provider"))
+
+                if ttsProvider == .bytedance {
+                    HStack {
+                        Text("AppID")
+                        Spacer()
+                        TextField("火山引擎 AppID", text: $ttsApiKey)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 200)
+                    }
+                    .settingsHighlight(id: highlightID("TTS AppID"))
+
+                    HStack {
+                        Text("Token")
+                        Spacer()
+                        SecureField("AccessToken", text: $ttsApiSecret)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 200)
+                    }
+                    .settingsHighlight(id: highlightID("TTS Token"))
+
+                    Picker("音色", selection: $ttsVoiceType) {
+                        ForEach(TTSVoiceType.allCases) { voice in
+                            Text(voice.rawValue).tag(voice)
+                        }
+                    }
+                    .settingsHighlight(id: highlightID("TTS Voice"))
+                }
+            } header: {
+                Text("语音合成 (TTS)")
+            } footer: {
+                if ttsProvider == .system {
+                    Text("使用 macOS 内置语音合成，自动匹配系统「简体中文」语音。无需配置。")
+                        .foregroundStyle(.secondary).font(.caption)
+                } else if ttsProvider == .bytedance {
+                    Text("使用火山引擎（豆包）TTS，音色自然度远超系统语音。\n与语音识别的 AppID + AccessToken 共用，若已填写语音识别参数则无需重复输入。")
                         .foregroundStyle(.secondary).font(.caption)
                 }
             }

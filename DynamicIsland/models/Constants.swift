@@ -1256,6 +1256,11 @@ static let enableDeepseekProvider = Key<Bool>("enableDeepseekProvider", default:
     static let speechApiSecret = Key<String>("speechApiSecret", default: "")
     static let voiceMode = Key<VoiceMode>("voiceMode", default: .manual)
     static let localModelEndpoint = Key<String>("localModelEndpoint", default: "http://localhost:11434")
+    static let ttsProvider = Key<TTSSynthesisProvider>("ttsProvider", default: .system)
+    static let ttsApiKey = Key<String>("ttsApiKey", default: "")
+    static let ttsApiSecret = Key<String>("ttsApiSecret", default: "")
+    static let ttsVoiceType = Key<TTSVoiceType>("ttsVoiceType", default: .BV001)
+
 
     // MARK: Third-Party Extensions
     static let enableThirdPartyExtensions = Key<Bool>("enableThirdPartyExtensions", default: true)

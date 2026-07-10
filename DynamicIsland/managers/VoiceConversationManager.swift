@@ -47,10 +47,63 @@ enum VoiceMode: String, CaseIterable, Identifiable, Defaults.Serializable {
     var id: String { rawValue }
 }
 
+
+
+// MARK: - TTS 语音合成供应商
+
+enum TTSSynthesisProvider: String, CaseIterable, Identifiable, Defaults.Serializable {
+    case system    = "系统语音合成"
+    case bytedance = "火山引擎 (豆包)"
+
+    var id: String { rawValue }
+
+    var needsApiKey: Bool {
+        switch self {
+        case .system:    return false
+        case .bytedance: return true
+        }
+    }
+
+    var apiDoc: String {
+        switch self {
+        case .system:    return ""
+        case .bytedance: return "与语音识别共用 AppID + AccessToken"
+        }
+    }
+}
+
+// MARK: - 豆包 TTS 音色
+
+enum TTSVoiceType: String, CaseIterable, Identifiable, Defaults.Serializable {
+    case BV001 = "豆包女声 (默认)"
+    case BV002 = "豆包男声"
+    case BV003 = "知性女声"
+    case BV004 = "醇厚男声"
+    case BV405 = "甜美女生"
+    case BV406 = "阳光男声"
+    case BV007 = "亲切女声"
+    case BV008 = "沉稳男声"
+
+    var id: String { rawValue }
+
+    var voiceCode: String {
+        switch self {
+        case .BV001: return "BV001_streaming"
+        case .BV002: return "BV002_streaming"
+        case .BV003: return "BV003_streaming"
+        case .BV004: return "BV004_streaming"
+        case .BV405: return "BV405_streaming"
+        case .BV406: return "BV406_streaming"
+        case .BV007: return "BV007_streaming"
+        case .BV008: return "BV008_streaming"
+        }
+    }
+}
+
 // MARK: - 实时对话管理器
 
 @MainActor
-final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorderDelegate {
+final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorderDelegate, AVAudioPlayerDelegate {
     static let shared = VoiceConversationManager()
 
     // 状态
@@ -63,6 +116,7 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
     private var audioEngine: AVAudioEngine?
     private var recognitionTask: SFSpeechRecognitionTask?
     private var speechSynthesizer = AVSpeechSynthesizer()
+    private var ttsAudioPlayer: AVAudioPlayer?
 
     // 静音检测
     private var pauseTimer: Timer?
@@ -101,6 +155,19 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
         lastResponse = text
         stopSpeaking()
 
+        let ttsProvider = Defaults[.ttsProvider]
+
+        switch ttsProvider {
+        case .bytedance:
+            synthesizeViaVolcano(text: text)
+        case .system:
+            fallthrough
+        default:
+            speakWithSystemTTS(text)
+        }
+    }
+
+    private func speakWithSystemTTS(_ text: String) {
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: "zh-CN")
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.95
@@ -108,14 +175,12 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
         isSpeaking = true
         speechSynthesizer.speak(utterance)
 
-        // 朗读完成后重新开始监听
         DispatchQueue.global().async { [weak self] in
             while self?.speechSynthesizer.isSpeaking == true {
                 Thread.sleep(forTimeInterval: 0.1)
             }
             DispatchQueue.main.async {
                 self?.isSpeaking = false
-                // 如果是实时对话模式且仍然活跃，自动开始下一轮
                 if self?.isActive == true && Defaults[.voiceMode] == .continuous {
                     // 发送完毕，继续监听
                 }
@@ -126,6 +191,9 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
     func stopSpeaking() {
         if speechSynthesizer.isSpeaking {
             speechSynthesizer.stopSpeaking(at: .immediate)
+        }
+        if ttsAudioPlayer?.isPlaying == true {
+            ttsAudioPlayer?.stop()
         }
         isSpeaking = false
     }
@@ -513,6 +581,123 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
                 }
             }
         }.resume()
+    }
+
+
+
+    // MARK: - 火山引擎 TTS 合成
+
+    private func synthesizeViaVolcano(text: String) {
+        let appId = Defaults[.ttsApiKey]
+        let token = Defaults[.ttsApiSecret]
+        guard !appId.isEmpty, !token.isEmpty else {
+            print("❌ 火山引擎 TTS 未配置 AppID/Token，回退到系统 TTS")
+            speakWithSystemTTS(text)
+            return
+        }
+
+        let voiceType = Defaults[.ttsVoiceType]
+        let reqId = UUID().uuidString
+
+        var request = URLRequest(url: URL(string: "https://openspeech.bytedance.com/api/v1/tts")!)
+        request.httpMethod = "POST"
+        request.setValue("Bearer; \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "app": [
+                "appid": appId,
+                "token": token,
+                "cluster": "volcano_tts"
+            ],
+            "user": [
+                "uid": "atoll_user"
+            ],
+            "audio": [
+                "voice_type": voiceType.voiceCode,
+                "encoding": "mp3",
+                "speed_ratio": 1.0,
+                "rate": 24000
+            ],
+            "request": [
+                "reqid": reqId,
+                "text": text,
+                "text_type": "plain",
+                "operation": "query"
+            ]
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        isSpeaking = true
+        print("🎤 火山引擎 TTS 合成: \(text.prefix(50))...")
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self else { return }
+
+            if let error {
+                print("❌ 火山引擎 TTS 请求失败: \(error)")
+                DispatchQueue.main.async {
+                    self.isSpeaking = false
+                    // 回退系统 TTS
+                    self.speakWithSystemTTS(text)
+                }
+                return
+            }
+
+            guard let data else {
+                print("❌ 火山引擎 TTS 返回空数据")
+                DispatchQueue.main.async {
+                    self.isSpeaking = false
+                    self.speakWithSystemTTS(text)
+                }
+                return
+            }
+
+            // 检查是否是 JSON 错误响应
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let code = json["code"] as? Int, code != 3000 {
+                let message = json["message"] as? String ?? "未知错误"
+                print("❌ 火山引擎 TTS 错误: code=\(code), message=\(message)")
+                DispatchQueue.main.async {
+                    self.isSpeaking = false
+                    self.speakWithSystemTTS(text)
+                }
+                return
+            }
+
+            // 成功 — 播放 MP3 音频
+            DispatchQueue.main.async {
+                self.playTTSAudio(data: data, completion: { [weak self] in
+                    self?.isSpeaking = false
+                    if self?.isActive == true && Defaults[.voiceMode] == .continuous {
+                        // 播放完毕，继续监听
+                    }
+                })
+            }
+        }.resume()
+    }
+
+    private func playTTSAudio(data: Data, completion: @escaping () -> Void) {
+        do {
+            ttsAudioPlayer = try AVAudioPlayer(data: data)
+            ttsAudioPlayer?.delegate = self  // AVAudioPlayerDelegate will fire when done
+            ttsAudioPlayer?.volume = 0.9
+            ttsAudioPlayer?.play()
+            print("🔊 火山引擎 TTS 播放中...")
+
+            // 设置完成回调
+            DispatchQueue.global().async { [weak self] in
+                while self?.ttsAudioPlayer?.isPlaying == true {
+                    Thread.sleep(forTimeInterval: 0.1)
+                }
+                DispatchQueue.main.async {
+                    completion()
+                }
+            }
+        } catch {
+            print("❌ 播放 TTS 音频失败: \(error)")
+            completion()
+        }
     }
 
 }

@@ -127,6 +127,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
     private var audioRecorder: AVAudioRecorder?
     private var recordingTimer: Timer?
     private var _speechSynthesizer: AVSpeechSynthesizer?
+    private var ttsAudioPlayer: AVAudioPlayer?
     private var activeRequest: URLSessionTask?
     
     // Panel management
@@ -1656,22 +1657,36 @@ extension ScreenAssistantManager: SFSpeechRecognizerDelegate {
     
     /// 朗读文字（TTS）
     func speakText(_ text: String) {
+        // 如果正在播放，先停止
         if isSpeaking {
             speechSynthesizer.stopSpeaking(at: .immediate)
+            ttsAudioPlayer?.stop()
             isSpeaking = false
             return
         }
-        
+
+        let ttsProvider = Defaults[.ttsProvider]
+
+        switch ttsProvider {
+        case .bytedance:
+            synthesizeScreenViaVolcano(text: text)
+        case .system:
+            fallthrough
+        default:
+            speakWithSystemTTS(text)
+        }
+    }
+
+    private func speakWithSystemTTS(_ text: String) {
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: "zh-CN")
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9 // 稍慢一点更清晰
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9
         utterance.pitchMultiplier = 1.0
         utterance.volume = 0.8
-        
+
         isSpeaking = true
         speechSynthesizer.speak(utterance)
-        
-        // 监听播放完成
+
         DispatchQueue.global().async { [weak self] in
             while self?.speechSynthesizer.isSpeaking == true {
                 Thread.sleep(forTimeInterval: 0.1)
@@ -1680,6 +1695,102 @@ extension ScreenAssistantManager: SFSpeechRecognizerDelegate {
                 self?.isSpeaking = false
             }
         }
+    }
+
+    // MARK: - 火山引擎 TTS (ScreenAssistant)
+
+    private func synthesizeScreenViaVolcano(text: String) {
+        let appId = Defaults[.ttsApiKey]
+        let token = Defaults[.ttsApiSecret]
+        guard !appId.isEmpty, !token.isEmpty else {
+            print("❌ 火山引擎 TTS 未配置，回退到系统 TTS")
+            speakWithSystemTTS(text)
+            return
+        }
+
+        let voiceType = Defaults[.ttsVoiceType]
+        let reqId = UUID().uuidString
+
+        var request = URLRequest(url: URL(string: "https://openspeech.bytedance.com/api/v1/tts")!)
+        request.httpMethod = "POST"
+        request.setValue("Bearer; \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "app": [
+                "appid": appId,
+                "token": token,
+                "cluster": "volcano_tts"
+            ],
+            "user": [
+                "uid": "atoll_user"
+            ],
+            "audio": [
+                "voice_type": voiceType.voiceCode,
+                "encoding": "mp3",
+                "speed_ratio": 1.0
+            ],
+            "request": [
+                "reqid": reqId,
+                "text": text,
+                "text_type": "plain",
+                "operation": "query"
+            ]
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        isSpeaking = true
+        print("🎤 Screen TTS 合成: \(text.prefix(50))...")
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self else { return }
+
+            if let error {
+                print("❌ 火山引擎 TTS 失败: \(error)")
+                DispatchQueue.main.async {
+                    self.isSpeaking = false
+                    self.speakWithSystemTTS(text)
+                }
+                return
+            }
+
+            guard let data else {
+                DispatchQueue.main.async {
+                    self.isSpeaking = false
+                    self.speakWithSystemTTS(text)
+                }
+                return
+            }
+
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let code = json["code"] as? Int, code != 3000 {
+                print("❌ 火山引擎 TTS 错误: \(json["message"] as? String ?? "未知")")
+                DispatchQueue.main.async {
+                    self.isSpeaking = false
+                    self.speakWithSystemTTS(text)
+                }
+                return
+            }
+
+            DispatchQueue.main.async {
+                do {
+                    self.ttsAudioPlayer = try AVAudioPlayer(data: data)
+                    self.ttsAudioPlayer?.volume = 0.9
+                    self.ttsAudioPlayer?.play()
+                    DispatchQueue.global().async { [weak self] in
+                        while self?.ttsAudioPlayer?.isPlaying == true {
+                            Thread.sleep(forTimeInterval: 0.1)
+                        }
+                        DispatchQueue.main.async {
+                            self?.isSpeaking = false
+                        }
+                    }
+                } catch {
+                    print("❌ 播放 TTS 音频失败: \(error)")
+                    self.isSpeaking = false
+                }
+            }
+        }.resume()
     }
     
     private func requestSpeechPermission(completion: @escaping (Bool) -> Void) {
