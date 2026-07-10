@@ -31,6 +31,7 @@ struct LiveActivitiesSettings: View {
     @Default(.enableScreenRecordingDetection) var enableScreenRecordingDetection
     @Default(.enableDoNotDisturbDetection) var enableDoNotDisturbDetection
     @Default(.focusIndicatorNonPersistent) var focusIndicatorNonPersistent
+    @Default(.focusMonitoringMode) var focusMonitoringMode
     @Default(.capsLockIndicatorTintMode) var capsLockTintMode
 
     private func highlightID(_ title: String) -> String {
@@ -88,6 +89,14 @@ struct LiveActivitiesSettings: View {
                         openSettingsAction: { fullDiskAccessPermission.openSystemSettings() }
                     )
                 }
+
+                Picker("Monitoring Mode", selection: $focusMonitoringMode) {
+                    ForEach(FocusMonitoringMode.allCases) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .pickerStyle(.menu)
+                .settingsHighlight(id: highlightID("Focus Monitoring Mode"))
 
                 Defaults.Toggle(key: .enableDoNotDisturbDetection) {
                     Text("Enable Focus Detection")

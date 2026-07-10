@@ -1,33 +1,33 @@
 //
-//  SettingsView.swift
+//  ScreenAssistantSettingsView.swift
 //  DynamicIsland
 //
 //  Created by Richard Kunkli on 07/08/2024.
 //
-import AppKit
-import AVFoundation
-import Combine
+//  Refactored 2026-07-10: full multi-provider AI settings.
+//
 import Defaults
-import EventKit
-import KeyboardShortcuts
-import LaunchAtLogin
-import LottieUI
-import Sparkle
 import SwiftUI
-import SwiftUIIntrospect
-import UniformTypeIdentifiers
-
-/// Groups for organizing settings tabs in the sidebar.
-
-
 
 struct ScreenAssistantSettings: View {
     @ObservedObject var screenAssistantManager = ScreenAssistantManager.shared
     @Default(.enableScreenAssistant) var enableScreenAssistant
     @Default(.screenAssistantDisplayMode) var screenAssistantDisplayMode
+    @Default(.selectedAIProvider) var selectedAIProvider
+    @Default(.selectedAIModel) var selectedAIModel
+    @Default(.enableThinkingMode) var enableThinkingMode
+    @Default(.localModelEndpoint) var localModelEndpoint
+
+    // Per-provider API keys
     @Default(.geminiApiKey) var geminiApiKey
-    @State private var apiKeyText = ""
-    @State private var showingApiKey = false
+    @Default(.openaiApiKey) var openaiApiKey
+    @Default(.claudeApiKey) var claudeApiKey
+    @Default(.groqApiKey) var groqApiKey
+    @Default(.deepseekApiKey) var deepseekApiKey
+    @Default(.openrouterApiKey) var openrouterApiKey
+
+    @State private var editingKeyFor: AIModelProvider? = nil
+    @State private var editingKeyText = ""
 
     private func highlightID(_ title: String) -> String {
         SettingsTab.screenAssistant.highlightID(for: title)
@@ -35,6 +35,7 @@ struct ScreenAssistantSettings: View {
 
     var body: some View {
         Form {
+            // MARK: - Enable toggle
             Section {
                 Defaults.Toggle(key: .enableScreenAssistant) {
                     Text("Enable Screen Assistant")
@@ -46,144 +47,349 @@ struct ScreenAssistantSettings: View {
                 Text("AI-powered assistant that can analyze files, images, and provide conversational help. Use Cmd+Shift+A to quickly access the assistant.")
             }
 
-            if enableScreenAssistant {
-                Section {
-                    HStack {
-                        Text("Gemini API Key")
-                        Spacer()
-                        if geminiApiKey.isEmpty {
-                            Text("Not Set")
-                                .foregroundColor(.red)
-                        } else {
-                            Text("••••••••")
-                                .foregroundColor(.green)
-                        }
+            guard enableScreenAssistant else { return }
 
-                        Button(showingApiKey ? "Hide" : (geminiApiKey.isEmpty ? "Set" : "Change")) {
-                            if showingApiKey {
-                                showingApiKey = false
-                                if !apiKeyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                    Defaults[.geminiApiKey] = apiKeyText
-                                }
-                                apiKeyText = ""
-                            } else {
-                                showingApiKey = true
-                                apiKeyText = geminiApiKey
-                            }
+            // MARK: - Provider Selection
+            Section {
+                Picker("AI Provider", selection: $selectedAIProvider) {
+                    ForEach(AIModelProvider.allCases) { provider in
+                        HStack(spacing: 6) {
+                            providerIcon(for: provider)
+                            Text(provider.displayName)
+                        }
+                        .tag(provider)
+                    }
+                }
+                .pickerStyle(.menu)
+                .settingsHighlight(id: highlightID("AI Provider"))
+                .onChange(of: selectedAIProvider) { _, newProvider in
+                    // Auto-select first model of new provider
+                    if let firstModel = newProvider.supportedModels.first {
+                        selectedAIModel = firstModel
+                        enableThinkingMode = false
+                    }
+                }
+
+                Text(selectedAIProvider.description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text("Provider")
+            }
+
+            // MARK: - API Key
+            Section {
+                providerAPIKeyRow
+            } header: {
+                Text("API Key")
+            } footer: {
+                apiKeyFooterText
+            }
+
+            // MARK: - Model Selection
+            Section {
+                if selectedAIProvider.supportedModels.isEmpty {
+                    Text("No models available")
+                        .foregroundStyle(.secondary)
+                } else {
+                    Picker("Model", selection: $selectedAIModel) {
+                        ForEach(selectedAIProvider.supportedModels) { model in
+                            Text(model.name)
+                                .tag(Optional(model))
                         }
                     }
+                    .pickerStyle(.menu)
+                    .settingsHighlight(id: highlightID("Model"))
 
-                    if showingApiKey {
-                        VStack(alignment: .leading, spacing: 8) {
-                            SecureField("Enter your Gemini API Key", text: $apiKeyText)
-                                .textFieldStyle(.roundedBorder)
+                    if let currentModel = selectedAIModel, currentModel.supportsThinking {
+                        Defaults.Toggle(key: .enableThinkingMode) {
+                            HStack(spacing: 6) {
+                                Text("Thinking Mode")
+                                customBadge(text: "Beta")
+                            }
+                        }
+                        .settingsHighlight(id: highlightID("Thinking Mode"))
+                        .help("Enables extended reasoning / chain-of-thought for models that support it.")
+                    }
+                }
+            } header: {
+                Text("Model")
+            } footer: {
+                if let currentModel = selectedAIModel {
+                    Text("Model ID: \(currentModel.id)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .monospaced()
+                }
+            }
 
-                            Text("Get your free API key from Google AI Studio")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+            // MARK: - Local Model Endpoint
+            if selectedAIProvider == .local {
+                Section {
+                    TextField("http://localhost:11434", text: $localModelEndpoint)
+                        .textFieldStyle(.roundedBorder)
+                        .settingsHighlight(id: highlightID("Local Endpoint"))
+                } header: {
+                    Text("Local Endpoint")
+                } footer: {
+                    Text("Default Ollama API endpoint. Change if your local LLM server runs on a different address.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
 
+            // MARK: - Display Mode
+            Section {
+                Picker("Display Mode", selection: $screenAssistantDisplayMode) {
+                    ForEach(ScreenAssistantDisplayMode.allCases, id: \.self) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .pickerStyle(.menu)
+                .settingsHighlight(id: highlightID("Display Mode"))
+            } header: {
+                Text("Display")
+            } footer: {
+                switch screenAssistantDisplayMode {
+                case .popover:
+                    Text("Popover mode shows the assistant as a dropdown attached to the AI button.")
+                case .panel:
+                    Text("Panel mode shows the assistant in a floating window near the notch.")
+                }
+            }
+
+            // MARK: - Status
+            Section {
+                HStack {
+                    Text("Attached Files")
+                    Spacer()
+                    Text("\(screenAssistantManager.attachedFiles.count)")
+                        .foregroundColor(.secondary)
+                }
+
+                HStack {
+                    Text("Recording Status")
+                    Spacer()
+                    Text(screenAssistantManager.isRecording ? "Recording" : "Ready")
+                        .foregroundColor(screenAssistantManager.isRecording ? .red : .secondary)
+                }
+            } header: {
+                Text("Status")
+            }
+
+            // MARK: - Actions
+            Section {
+                Button("Clear All Files") {
+                    screenAssistantManager.clearAllFiles()
+                }
+                .foregroundColor(.red)
+                .disabled(screenAssistantManager.attachedFiles.isEmpty)
+            } header: {
+                Text("Actions")
+            } footer: {
+                Text("Clear all files removes all attached files and audio recordings. This action is permanent.")
+            }
+
+            // MARK: - Attached Files List
+            if !screenAssistantManager.attachedFiles.isEmpty {
+                Section {
+                    ForEach(screenAssistantManager.attachedFiles) { file in
+                        VStack(alignment: .leading, spacing: 4) {
                             HStack {
-                                Button("Open Google AI Studio") {
-                                    NSWorkspace.shared.open(URL(string: "https://aistudio.google.com/app/apikey")!)
-                                }
-                                .buttonStyle(.link)
-
+                                Image(systemName: file.type.iconName)
+                                    .foregroundColor(.blue)
+                                    .frame(width: 16)
+                                Text(file.type.displayName)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                                 Spacer()
-
-                                Button("Save") {
-                                    Defaults[.geminiApiKey] = apiKeyText
-                                    showingApiKey = false
-                                    apiKeyText = ""
-                                }
-                                .disabled(apiKeyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                Text(timeAgoString(from: file.timestamp))
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
                             }
+                            Text(file.name)
+                                .font(.system(.body, design: .monospaced))
+                                .lineLimit(2)
                         }
-                    }
-
-                    HStack {
-                        Text("Display Mode")
-                        Spacer()
-                        Picker("", selection: $screenAssistantDisplayMode) {
-                            ForEach(ScreenAssistantDisplayMode.allCases, id: \.self) { mode in
-                                Text(mode.displayName).tag(mode)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .frame(minWidth: 100)
-                    }
-                    .settingsHighlight(id: highlightID("Display Mode"))
-
-                    HStack {
-                        Text("Attached Files")
-                        Spacer()
-                        Text("\(screenAssistantManager.attachedFiles.count)")
-                            .foregroundColor(.secondary)
-                    }
-
-                    HStack {
-                        Text("Recording Status")
-                        Spacer()
-                        Text(screenAssistantManager.isRecording ? "Recording" : "Ready")
-                            .foregroundColor(screenAssistantManager.isRecording ? .red : .secondary)
+                        .padding(.vertical, 2)
                     }
                 } header: {
-                    Text("Configuration")
-                } footer: {
-                    switch screenAssistantDisplayMode {
-                    case .popover:
-                        Text("Popover mode shows the assistant as a dropdown attached to the AI button. Panel mode shows the assistant in a floating window near the notch.")
-                    case .panel:
-                        Text("Panel mode shows the assistant in a floating window near the notch. Popover mode shows the assistant as a dropdown attached to the AI button.")
-                    }
-                }
-
-                Section {
-                    Button("Clear All Files") {
-                        screenAssistantManager.clearAllFiles()
-                    }
-                    .foregroundColor(.red)
-                    .disabled(screenAssistantManager.attachedFiles.isEmpty)
-                } header: {
-                    Text("Actions")
-                } footer: {
-                    Text("Clear all files removes all attached files and audio recordings. This action is permanent.")
-                }
-
-                if !screenAssistantManager.attachedFiles.isEmpty {
-                    Section {
-                        ForEach(screenAssistantManager.attachedFiles) { file in
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Image(systemName: file.type.iconName)
-                                        .foregroundColor(.blue)
-                                        .frame(width: 16)
-                                    Text(file.type.displayName)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    Text(timeAgoString(from: file.timestamp))
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary)
-                                }
-                                Text(file.name)
-                                    .font(.system(.body, design: .monospaced))
-                                    .lineLimit(2)
-                            }
-                            .padding(.vertical, 2)
-                        }
-                    } header: {
-                        Text("Attached Files")
-                    }
+                    Text("Attached Files")
                 }
             }
         }
         .formStyle(.grouped)
         .navigationTitle("Screen Assistant")
+        .sheet(item: $editingKeyFor) { provider in
+            apiKeyEditorSheet(for: provider)
+        }
+    }
+
+    // MARK: - API Key Row
+
+    @ViewBuilder
+    private var providerAPIKeyRow: some View {
+        let key = currentProviderKeyBinding
+        let hasKey = !key.wrappedValue.isEmpty
+
+        HStack {
+            Text(selectedAIProvider.displayName + " API Key")
+            Spacer()
+            if hasKey {
+                Text("••••••••")
+                    .foregroundColor(.green)
+            } else {
+                Text("Not Set")
+                    .foregroundColor(.red)
+            }
+
+            Button(hasKey ? "Change" : "Set") {
+                editingKeyText = key.wrappedValue
+                editingKeyFor = selectedAIProvider
+            }
+        }
+    }
+
+    private var currentProviderKeyBinding: Binding<String> {
+        switch selectedAIProvider {
+        case .gemini:     return $geminiApiKey
+        case .openai:     return $openaiApiKey
+        case .claude:     return $claudeApiKey
+        case .local:      return .constant("")  // Local models don't need API keys
+        case .groq:       return $groqApiKey
+        case .deepseek:   return $deepseekApiKey
+        case .openrouter: return $openrouterApiKey
+        }
+    }
+
+    // MARK: - API Key Editor Sheet
+
+    @ViewBuilder
+    private func apiKeyEditorSheet(for provider: AIModelProvider) -> some View {
+        let binding = apiKeyBinding(for: provider)
+
+        VStack(spacing: 20) {
+            Text("\(provider.displayName) API Key")
+                .font(.title2)
+                .fontWeight(.semibold)
+
+            providerGetKeyLink(for: provider)
+                .font(.caption)
+
+            SecureField("Enter API key", text: $editingKeyText)
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 340)
+
+            HStack(spacing: 12) {
+                Button("Cancel") {
+                    editingKeyFor = nil
+                }
+                .keyboardShortcut(.escape)
+
+                Button("Save") {
+                    binding.wrappedValue = editingKeyText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    editingKeyFor = nil
+                }
+                .keyboardShortcut(.return)
+                .disabled(editingKeyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(24)
+        .frame(width: 400)
+    }
+
+    private func apiKeyBinding(for provider: AIModelProvider) -> Binding<String> {
+        switch provider {
+        case .gemini:     return $geminiApiKey
+        case .openai:     return $openaiApiKey
+        case .claude:     return $claudeApiKey
+        case .groq:       return $groqApiKey
+        case .deepseek:   return $deepseekApiKey
+        case .openrouter: return $openrouterApiKey
+        case .local:      return .constant("")
+        }
+    }
+
+    @ViewBuilder
+    private func providerGetKeyLink(for provider: AIModelProvider) -> some View {
+        switch provider {
+        case .gemini:
+            Link("Get API key → Google AI Studio",
+                 destination: URL(string: "https://aistudio.google.com/app/apikey")!)
+        case .openai:
+            Link("Get API key → OpenAI Platform",
+                 destination: URL(string: "https://platform.openai.com/api-keys")!)
+        case .claude:
+            Link("Get API key → Anthropic Console",
+                 destination: URL(string: "https://console.anthropic.com/settings/keys")!)
+        case .groq:
+            Link("Get API key → Groq Console",
+                 destination: URL(string: "https://console.groq.com/keys")!)
+        case .deepseek:
+            Link("Get API key → DeepSeek Platform",
+                 destination: URL(string: "https://platform.deepseek.com/api_keys")!)
+        case .openrouter:
+            Link("Get API key → OpenRouter Keys",
+                 destination: URL(string: "https://openrouter.ai/keys")!)
+        case .local:
+            EmptyView()
+        }
+    }
+
+    // MARK: - Provider Icon
+
+    @ViewBuilder
+    private func providerIcon(for provider: AIModelProvider) -> some View {
+        let name: String = {
+            switch provider {
+            case .gemini:     return "sparkles"
+            case .openai:     return "cpu"
+            case .claude:     return "message"
+            case .local:      return "desktopcomputer"
+            case .groq:       return "bolt"
+            case .deepseek:   return "waveform"
+            case .openrouter: return "globe"
+            }
+        }()
+        Image(systemName: name)
+            .font(.system(size: 12, weight: .semibold))
+            .frame(width: 20, height: 20)
+            .foregroundStyle(.white)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(providerTint(for: provider))
+            )
+    }
+
+    private func providerTint(for provider: AIModelProvider) -> Color {
+        switch provider {
+        case .gemini:     return .blue
+        case .openai:     return .green
+        case .claude:     return .orange
+        case .local:      return .gray
+        case .groq:       return .purple
+        case .deepseek:   return .teal
+        case .openrouter: return .indigo
+        }
+    }
+
+    // MARK: - Footer text per provider
+
+    private var apiKeyFooterText: Text {
+        if currentProviderKeyBinding.wrappedValue.isEmpty {
+            return Text("Required to use \(selectedAIProvider.displayName). Your key is stored securely in the macOS Keychain via UserDefaults.")
+                .foregroundStyle(.secondary)
+                .font(.caption)
+        } else {
+            return Text("API key configured. Change it if needed.")
+                .foregroundStyle(.secondary)
+                .font(.caption)
+        }
     }
 
     private func timeAgoString(from date: Date) -> String {
         let interval = Date().timeIntervalSince(date)
-
         if interval < 60 {
             return "Just now"
         } else if interval < 3600 {

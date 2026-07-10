@@ -127,6 +127,11 @@ struct Appearance: View {
                     Text("Use simpler close animation")
                 }
                 .settingsHighlight(id: highlightID("Use simpler close animation"))
+
+                Defaults.Toggle(key: .enableWobbleAnimation) {
+                    Text("Enable wobble animation")
+                }
+                .settingsHighlight(id: highlightID("Enable wobble animation"))
             } header: {
                 Text("General")
             }
