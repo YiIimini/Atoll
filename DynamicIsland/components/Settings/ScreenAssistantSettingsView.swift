@@ -25,6 +25,12 @@ struct ScreenAssistantSettings: View {
     @Default(.groqApiKey) var groqApiKey
     @Default(.deepseekApiKey) var deepseekApiKey
     @Default(.openrouterApiKey) var openrouterApiKey
+    @Default(.qwenApiKey) var qwenApiKey
+    @Default(.moonshotApiKey) var moonshotApiKey
+    @Default(.zhipuApiKey) var zhipuApiKey
+    @Default(.baichuanApiKey) var baichuanApiKey
+    @Default(.yiApiKey) var yiApiKey
+    @Default(.minimaxApiKey) var minimaxApiKey
 
     @State private var editingKeyFor: AIModelProvider? = nil
     @State private var editingKeyText = ""
@@ -261,6 +267,12 @@ struct ScreenAssistantSettings: View {
         case .groq:       return $groqApiKey
         case .deepseek:   return $deepseekApiKey
         case .openrouter: return $openrouterApiKey
+        case .qwen:     return $qwenApiKey
+        case .moonshot: return $moonshotApiKey
+        case .zhipu:    return $zhipuApiKey
+        case .baichuan: return $baichuanApiKey
+        case .yi:       return $yiApiKey
+        case .minimax:  return $minimaxApiKey
         }
     }
 
@@ -334,6 +346,24 @@ struct ScreenAssistantSettings: View {
         case .openrouter:
             Link("Get API key → OpenRouter Keys",
                  destination: URL(string: "https://openrouter.ai/keys")!)
+        case .qwen:
+            Link("获取 API Key → 阿里云百炼",
+                 destination: URL(string: "https://bailian.console.aliyun.com/")!)
+        case .moonshot:
+            Link("获取 API Key → 月之暗面开放平台",
+                 destination: URL(string: "https://platform.moonshot.cn/")!)
+        case .zhipu:
+            Link("获取 API Key → 智谱开放平台",
+                 destination: URL(string: "https://open.bigmodel.cn/")!)
+        case .baichuan:
+            Link("获取 API Key → 百川智能开放平台",
+                 destination: URL(string: "https://platform.baichuan-ai.com/")!)
+        case .yi:
+            Link("获取 API Key → 零一万物开放平台",
+                 destination: URL(string: "https://platform.lingyiwanwu.com/")!)
+        case .minimax:
+            Link("获取 API Key → Minimax 开放平台",
+                 destination: URL(string: "https://platform.minimax.chat/")!)
         case .local:
             EmptyView()
         }
@@ -352,6 +382,12 @@ struct ScreenAssistantSettings: View {
             case .groq:       return "bolt"
             case .deepseek:   return "waveform"
             case .openrouter: return "globe"
+            case .qwen:     return "text.bubble"
+            case .moonshot: return "moon.stars"
+            case .zhipu:    return "brain.head.profile"
+            case .baichuan: return "scroll"
+            case .yi:       return "sparkle.magnifyingglass"
+            case .minimax:  return "waveform.and.mic"
             }
         }()
         Image(systemName: name)
@@ -373,6 +409,12 @@ struct ScreenAssistantSettings: View {
         case .groq:       return .purple
         case .deepseek:   return .teal
         case .openrouter: return .indigo
+        case .qwen:     return .cyan
+        case .moonshot: return .mint
+        case .zhipu:    return .pink
+        case .baichuan: return .red
+        case .yi:       return .yellow
+        case .minimax:  return .indigo
         }
     }
 
