@@ -2,22 +2,20 @@
   "models": [
     {
       "id": "anthropic/claude-3-opus",
-      "name": "",
+      "name": "Anthropic: Claude 3 Opus",
       "pricing": {
-        "prompt": "",
-        "completion": ""
+        "prompt": "0.000015",
+        "completion": "0.000075"
       }
-    }
-,
+    },
     {
       "id": "anthropic/claude-3-5-sonnet",
-      "name": "",
+      "name": "Anthropic: Claude 3.5 Sonnet",
       "pricing": {
-        "prompt": "",
-        "completion": ""
+        "prompt": "0.000003",
+        "completion": "0.000015"
       }
-    }
-,
+    },
     {
       "id": "anthropic/claude-3-haiku",
       "name": "Anthropic: Claude 3 Haiku",
@@ -25,16 +23,247 @@
         "prompt": "0.00000025",
         "completion": "0.00000125"
       }
-    }
-,
+    },
     {
       "id": "openai/gpt-5-preview",
-      "name": "",
+      "name": "OpenAI: GPT-5 Preview",
       "pricing": {
-        "prompt": "",
-        "completion": ""
+        "prompt": "0.00000125",
+        "completion": "0.00001"
+      }
+    },
+    {
+      "id": "openai/gpt-4o",
+      "name": "OpenAI: GPT-4o",
+      "pricing": {
+        "prompt": "0.0000025",
+        "completion": "0.00001"
+      }
+    },
+    {
+      "id": "openai/gpt-4o-mini",
+      "name": "OpenAI: GPT-4o Mini",
+      "pricing": {
+        "prompt": "0.00000015",
+        "completion": "0.0000006"
+      }
+    },
+    {
+      "id": "google/gemini-2.5-pro",
+      "name": "Google: Gemini 2.5 Pro",
+      "pricing": {
+        "prompt": "0.00000125",
+        "completion": "0.000005"
+      }
+    },
+    {
+      "id": "google/gemini-2.5-flash",
+      "name": "Google: Gemini 2.5 Flash",
+      "pricing": {
+        "prompt": "0.00000015",
+        "completion": "0.0000006"
+      }
+    },
+    {
+      "id": "deepseek-chat",
+      "name": "DeepSeek: V3",
+      "pricing": {
+        "prompt": "0.00000027",
+        "completion": "0.0000011"
+      }
+    },
+    {
+      "id": "deepseek-reasoner",
+      "name": "DeepSeek: R1",
+      "pricing": {
+        "prompt": "0.00000055",
+        "completion": "0.00000219"
+      }
+    },
+    {
+      "id": "qwen-max",
+      "name": "阿里云: 通义千问 Max",
+      "pricing": {
+        "prompt": "0.0000028",
+        "completion": "0.000014"
+      }
+    },
+    {
+      "id": "qwen-plus",
+      "name": "阿里云: 通义千问 Plus",
+      "pricing": {
+        "prompt": "0.00000056",
+        "completion": "0.0000028"
+      }
+    },
+    {
+      "id": "qwen-turbo",
+      "name": "阿里云: 通义千问 Turbo",
+      "pricing": {
+        "prompt": "0.0000003",
+        "completion": "0.0000006"
+      }
+    },
+    {
+      "id": "qwen3-235b-a22b",
+      "name": "阿里云: Qwen3 235B",
+      "pricing": {
+        "prompt": "0.00000056",
+        "completion": "0.0000028"
+      }
+    },
+    {
+      "id": "qwq-32b",
+      "name": "阿里云: QwQ 32B",
+      "pricing": {
+        "prompt": "0.00000056",
+        "completion": "0.0000028"
+      }
+    },
+    {
+      "id": "moonshot-v1-8k",
+      "name": "月之暗面: Moonshot v1 8K",
+      "pricing": {
+        "prompt": "0.0000017",
+        "completion": "0.0000017"
+      }
+    },
+    {
+      "id": "moonshot-v1-32k",
+      "name": "月之暗面: Moonshot v1 32K",
+      "pricing": {
+        "prompt": "0.0000033",
+        "completion": "0.0000033"
+      }
+    },
+    {
+      "id": "moonshot-v1-128k",
+      "name": "月之暗面: Moonshot v1 128K",
+      "pricing": {
+        "prompt": "0.0000083",
+        "completion": "0.0000083"
+      }
+    },
+    {
+      "id": "kimi-latest",
+      "name": "月之暗面: Kimi Latest",
+      "pricing": {
+        "prompt": "0.0000033",
+        "completion": "0.0000033"
+      }
+    },
+    {
+      "id": "glm-4-plus",
+      "name": "智谱: GLM-4 Plus",
+      "pricing": {
+        "prompt": "0.000007",
+        "completion": "0.000007"
+      }
+    },
+    {
+      "id": "glm-4-flash",
+      "name": "智谱: GLM-4 Flash",
+      "pricing": {
+        "prompt": "0.00000007",
+        "completion": "0.00000007"
+      }
+    },
+    {
+      "id": "glm-4-air",
+      "name": "智谱: GLM-4 Air",
+      "pricing": {
+        "prompt": "0.00000014",
+        "completion": "0.00000014"
+      }
+    },
+    {
+      "id": "glm-4-long",
+      "name": "智谱: GLM-4 Long",
+      "pricing": {
+        "prompt": "0.00000014",
+        "completion": "0.00000014"
+      }
+    },
+    {
+      "id": "Baichuan4",
+      "name": "百川: Baichuan 4",
+      "pricing": {
+        "prompt": "0.000004",
+        "completion": "0.000004"
+      }
+    },
+    {
+      "id": "Baichuan4-Air",
+      "name": "百川: Baichuan 4 Air",
+      "pricing": {
+        "prompt": "0.0000007",
+        "completion": "0.0000007"
+      }
+    },
+    {
+      "id": "Baichuan3-Turbo",
+      "name": "百川: Baichuan 3 Turbo",
+      "pricing": {
+        "prompt": "0.0000007",
+        "completion": "0.0000007"
+      }
+    },
+    {
+      "id": "yi-large",
+      "name": "零一万物: Yi Large",
+      "pricing": {
+        "prompt": "0.0000028",
+        "completion": "0.0000028"
+      }
+    },
+    {
+      "id": "yi-medium",
+      "name": "零一万物: Yi Medium",
+      "pricing": {
+        "prompt": "0.0000007",
+        "completion": "0.0000007"
+      }
+    },
+    {
+      "id": "yi-spark",
+      "name": "零一万物: Yi Spark",
+      "pricing": {
+        "prompt": "0.00000014",
+        "completion": "0.00000014"
+      }
+    },
+    {
+      "id": "yi-lightning",
+      "name": "零一万物: Yi Lightning",
+      "pricing": {
+        "prompt": "0.00000014",
+        "completion": "0.00000014"
+      }
+    },
+    {
+      "id": "abab6.5s-chat",
+      "name": "Minimax: ABAB 6.5s",
+      "pricing": {
+        "prompt": "0.0000007",
+        "completion": "0.0000007"
+      }
+    },
+    {
+      "id": "abab6.5-chat",
+      "name": "Minimax: ABAB 6.5",
+      "pricing": {
+        "prompt": "0.0000042",
+        "completion": "0.0000042"
+      }
+    },
+    {
+      "id": "abab5.5-chat",
+      "name": "Minimax: ABAB 5.5",
+      "pricing": {
+        "prompt": "0.0000021",
+        "completion": "0.0000021"
       }
     }
   ],
-  "last_updated": "2026-07-10T01:48:23Z"
+  "last_updated": "2026-07-10T04:00:00Z"
 }
