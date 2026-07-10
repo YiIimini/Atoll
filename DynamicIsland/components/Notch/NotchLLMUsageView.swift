@@ -57,16 +57,16 @@ struct NotchLLMUsageView: View {
     private func success(_ snap: UsageSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             if snap.sessionLimit == nil && snap.weekLimit == nil {
-                window("Today", snap.today, prominent: true)
-                window("Week", snap.week)
-                window("Session", snap.session)
-                Text("quota unavailable").font(.caption2).foregroundStyle(.secondary.opacity(0.7))
+                window("今日", snap.today, prominent: true)
+                window("本周", snap.week)
+                window("本次会话", snap.session)
+                Text("配额信息不可用").font(.caption2).foregroundStyle(.secondary.opacity(0.7))
             } else {
                 if let limit = snap.sessionLimit { quotaGauge("Session", limit) }
                 if let limit = snap.weekLimit { quotaGauge("Week", limit) }
                 VStack(alignment: .leading, spacing: 2) {
-                    window("Today", snap.today, compact: true)
-                    window("Week", snap.week, compact: true)
+                    window("今日", snap.today, compact: true)
+                    window("本周", snap.week, compact: true)
                 }
             }
         }
@@ -92,9 +92,9 @@ struct NotchLLMUsageView: View {
             }
             .frame(height: 6)
             HStack {
-                Text("\(usedPct)% used").font(.caption2).monospacedDigit()
+                Text("已用 \(usedPct)%").font(.caption2).monospacedDigit()
                 Spacer()
-                Text("\(leftPct)% left").font(.caption2).foregroundStyle(.secondary).monospacedDigit()
+                Text("剩余 \(leftPct)%").font(.caption2).foregroundStyle(.secondary).monospacedDigit()
             }
         }
     }
@@ -111,7 +111,7 @@ struct NotchLLMUsageView: View {
         guard seconds > 0 else { return nil }
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
-        return hours > 0 ? "resets in \(hours)h \(minutes)m" : "resets in \(minutes)m"
+        return hours > 0 ? "\(hours)时\(minutes)分后重置" : "\(minutes)分后重置"
     }
 
     private func window(_ label: String, _ totals: UsageTotals, prominent: Bool = false, compact: Bool = false) -> some View {
