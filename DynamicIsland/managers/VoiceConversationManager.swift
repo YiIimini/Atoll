@@ -125,7 +125,6 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
     private var onSendHandler: ((String) -> Void)?
     
     // 独立律动球窗口
-    private var orbWindow: NSWindow?
 
     // MARK: - Public API
 
@@ -134,7 +133,6 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
         onSendHandler = onSend
         isActive = true
         liveText = ""
-        showOrbWindow()
         resolveProvider()
     }
 
@@ -148,7 +146,6 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
         audioRecorder = nil
         pauseTimer?.invalidate()
         stopSpeaking()
-        hideOrbWindow()
     }
 
     /// 朗读并继续监听
@@ -208,40 +205,6 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
     }
 
     // MARK: - 独立律动球浮动窗口
-
-    private func showOrbWindow() {
-        guard orbWindow == nil else { return }
-        
-        let size: CGFloat = 160
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: size, height: size),
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
-        )
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.hasShadow = false
-        window.level = .floating
-        window.collectionBehavior = [.canJoinAllSpaces, .stationary]
-        window.ignoresMouseEvents = true
-        
-        let hostingView = NSHostingView(
-            rootView: DreamOrbView(size: 70, previewMode: true)
-                .frame(width: size, height: size)
-        )
-        window.contentView = hostingView
-        window.center()
-        window.orderFront(nil)
-        
-        orbWindow = window
-    }
-
-    private func hideOrbWindow() {
-        orbWindow?.close()
-        orbWindow = nil
-    }
-
     // MARK: - 系统语音识别（实时流式）
 
     private func startSystemRecognition() {

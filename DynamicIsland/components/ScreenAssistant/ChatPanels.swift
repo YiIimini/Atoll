@@ -907,11 +907,9 @@ struct VoiceInputButton: View {
     var body: some View {
         Button(action: {
             if isContinuousMode {
-                // 实时对话模式：启动对话 + 律动球
                 if voiceManager.isActive {
                     voiceManager.stopConversation()
                 } else {
-                    // AI 回复回调
                     voiceManager.startConversation { message in
                         if !message.isEmpty {
                             screenAssistantManager.sendMessage(message)
@@ -919,7 +917,6 @@ struct VoiceInputButton: View {
                     }
                 }
             } else {
-                // 手动录音模式：原有行为
                 if screenAssistantManager.isRecording {
                     screenAssistantManager.finishVoiceInput()
                 } else {
@@ -927,26 +924,34 @@ struct VoiceInputButton: View {
                 }
             }
         }) {
-            ZStack {
-                Circle()
-                    .fill(buttonBackground)
-                    .frame(width: 32, height: 32)
-                
-                if !isContinuousMode && screenAssistantManager.isTranscribing {
-                    ProgressView()
-                        .scaleEffect(0.7)
-                        .tint(.white)
-                } else {
-                    Image(systemName: buttonIcon)
-                        .foregroundColor(buttonIconColor)
-                        .font(.system(size: 14))
+            if isContinuousMode && voiceManager.isActive {
+                // 实时对话激活 — 按钮变身律动球
+                ZStack {
+                    DreamOrbView(size: 56, previewMode: true)
                 }
+                .frame(width: 56, height: 56)
+            } else {
+                ZStack {
+                    Circle()
+                        .fill(buttonBackground)
+                        .frame(width: 32, height: 32)
+                    
+                    if !isContinuousMode && screenAssistantManager.isTranscribing {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                            .tint(.white)
+                    } else {
+                        Image(systemName: buttonIcon)
+                            .foregroundColor(buttonIconColor)
+                            .font(.system(size: 14))
+                    }
+                }
+                .frame(width: 32, height: 32)
             }
         }
         .buttonStyle(PlainButtonStyle())
         .help(buttonHelp)
-        .scaleEffect(isContinuousMode && voiceManager.isActive ? 1.15 : (screenAssistantManager.isRecording ? 1.1 : 1.0))
-        .animation(.easeInOut(duration: 0.3), value: voiceManager.isActive)
+        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: voiceManager.isActive)
         .animation(.easeInOut(duration: 0.2), value: screenAssistantManager.isRecording)
         .onReceive(NotificationCenter.default.publisher(for: .voiceInputTranscribed)) { notif in
             if let text = notif.object as? String {
@@ -958,28 +963,28 @@ struct VoiceInputButton: View {
     
     private var buttonBackground: Color {
         if isContinuousMode {
-            return voiceManager.isActive ? Color.purple.opacity(0.4) : Color.purple.opacity(0.15)
+            return Color.purple.opacity(0.15)
         }
         return screenAssistantManager.isRecording ? Color.red : Color.blue.opacity(0.2)
     }
     
     private var buttonIcon: String {
         if isContinuousMode {
-            return voiceManager.isActive ? "waveform.circle.fill" : "mic.fill"
+            return "mic.fill"
         }
         return screenAssistantManager.isRecording ? "stop.fill" : "mic.fill"
     }
     
     private var buttonIconColor: Color {
         if isContinuousMode {
-            return voiceManager.isActive ? .purple : .blue
+            return .purple
         }
         return screenAssistantManager.isRecording ? .white : .blue
     }
     
     private var buttonHelp: String {
         if isContinuousMode {
-            return voiceManager.isActive ? "停止实时对话" : "开始实时对话（律动球伴舞）"
+            return voiceManager.isActive ? "点击停止实时对话" : "开始实时对话"
         }
         return screenAssistantManager.isRecording ? "停止录音并识别" : "语音输入"
     }
@@ -1014,7 +1019,7 @@ struct SpeakButton: View {
     }
 }
 
-// MARK: - 梦幻律动球（实时对话时显示，焕彩全光谱律动）
+// MARK: - 梦幻律动球（Siri 风格有机流体球）
 
 struct DreamOrbView: View {
     let size: CGFloat
@@ -1023,9 +1028,8 @@ struct DreamOrbView: View {
     
     @ObservedObject private var voiceManager = VoiceConversationManager.shared
     @State private var phase: Double = 0
-    @State private var hueRotate: Double = 0
     
-    private let timer = Timer.publish(every: 0.04, on: .main, in: .common).autoconnect()
+    private let timer = Timer.publish(every: 0.033, on: .main, in: .common).autoconnect()
     
     /// 仅在实时对话模式活跃时显示（previewMode 始终显示）
     private var isVisible: Bool {
@@ -1037,126 +1041,124 @@ struct DreamOrbView: View {
         voiceManager.isActive ? 1.0 : 0.3
     }
     
-    /// 全光谱焕彩色（红橙黄绿青蓝紫循环）
-    private var rainbowColors: [Color] {
-        let h = hueRotate
-        return [
-            Color(hue: h, saturation: 1.0, brightness: 1.0),
-            Color(hue: h + 0.08, saturation: 1.0, brightness: 1.0),
-            Color(hue: h + 0.16, saturation: 1.0, brightness: 0.95),
-            Color(hue: h + 0.24, saturation: 0.9, brightness: 1.0),
-            Color(hue: h + 0.32, saturation: 1.0, brightness: 1.0),
-            Color(hue: h + 0.40, saturation: 0.9, brightness: 0.95),
-            Color(hue: h + 0.50, saturation: 1.0, brightness: 1.0),
-        ]
+    /// 多相位正弦波 — 模拟有机流体变形
+    private func wave(_ t: Double, freq: Double, offset: Double = 0) -> Double {
+        sin(t * freq + offset) * 0.5 + 0.5
     }
     
     @ViewBuilder
     var body: some View {
         if isVisible {
             ZStack {
-                // 最外层大面积光晕 — 全光谱扩散
+                // 外层大面积柔光 — 虹彩
                 Circle()
                     .fill(
                         AngularGradient(
-                            colors: rainbowColors.map { $0.opacity(0.25 * intensity) },
+                            gradient: Gradient(stops: [
+                                .init(color: Color(hue: phase.truncatingRemainder(dividingBy: 1), saturation: 0.8, brightness: 1.0).opacity(0.15 * intensity), location: 0),
+                                .init(color: Color(hue: (phase + 0.15).truncatingRemainder(dividingBy: 1), saturation: 0.7, brightness: 0.95).opacity(0.15 * intensity), location: 0.15),
+                                .init(color: Color(hue: (phase + 0.30).truncatingRemainder(dividingBy: 1), saturation: 0.9, brightness: 1.0).opacity(0.15 * intensity), location: 0.30),
+                                .init(color: Color(hue: (phase + 0.50).truncatingRemainder(dividingBy: 1), saturation: 0.7, brightness: 0.9).opacity(0.15 * intensity), location: 0.50),
+                                .init(color: Color(hue: (phase + 0.70).truncatingRemainder(dividingBy: 1), saturation: 0.8, brightness: 1.0).opacity(0.15 * intensity), location: 0.70),
+                                .init(color: Color(hue: (phase + 0.85).truncatingRemainder(dividingBy: 1), saturation: 0.7, brightness: 0.95).opacity(0.15 * intensity), location: 0.85),
+                                .init(color: Color(hue: (phase + 1.0).truncatingRemainder(dividingBy: 1), saturation: 0.8, brightness: 1.0).opacity(0.15 * intensity), location: 1.0),
+                            ]),
                             center: .center,
-                            angle: .degrees(phase * 240)
+                            angle: .degrees(phase * 90)
                         )
                     )
-                    .frame(width: size * 2.0, height: size * 2.0)
-                    .blur(radius: size * 0.4)
-                    .scaleEffect(1 + 0.2 * intensity * sin(phase * 1.7))
-                    .opacity(intensity)
+                    .frame(width: size * 1.9, height: size * 1.9)
+                    .blur(radius: size * 0.35)
+                    .scaleEffect(
+                        x: 1 + 0.18 * intensity * sin(phase * 1.5),
+                        y: 1 + 0.18 * intensity * cos(phase * 1.7)
+                    )
                 
-                // 第二层光晕 — 旋转收缩
+                // 中层柔光
                 Circle()
                     .fill(
-                        AngularGradient(
-                            colors: rainbowColors.map { $0.opacity(0.35 * intensity) },
+                        RadialGradient(
+                            colors: [
+                                Color(hue: phase.truncatingRemainder(dividingBy: 1), saturation: 0.6, brightness: 1.0).opacity(0.25 * intensity),
+                                Color(hue: (phase + 0.1).truncatingRemainder(dividingBy: 1), saturation: 0.5, brightness: 0.8).opacity(0.1 * intensity),
+                                .clear
+                            ],
                             center: .center,
-                            angle: .degrees(-phase * 200)
+                            startRadius: 0,
+                            endRadius: size * 0.9
                         )
                     )
                     .frame(width: size * 1.5, height: size * 1.5)
-                    .blur(radius: size * 0.2)
-                    .scaleEffect(1 + 0.12 * intensity * sin(phase * 2.3))
+                    .blur(radius: size * 0.15)
+                    .scaleEffect(1 + 0.1 * intensity * sin(phase * 2.0))
                 
-                // 中层流动环 — 高速旋转
-                Circle()
-                    .stroke(
-                        AngularGradient(
-                            colors: [
-                                Color(hue: hueRotate, saturation: 1.0, brightness: 1.0),
-                                Color(hue: hueRotate + 0.15, saturation: 0.9, brightness: 0.9),
-                                Color(hue: hueRotate + 0.30, saturation: 1.0, brightness: 1.0),
-                                Color(hue: hueRotate + 0.45, saturation: 0.9, brightness: 0.9),
-                                Color(hue: hueRotate + 0.60, saturation: 1.0, brightness: 1.0),
-                                Color(hue: hueRotate + 0.75, saturation: 0.9, brightness: 0.9),
-                                Color(hue: hueRotate + 1.0, saturation: 1.0, brightness: 1.0),
-                            ],
-                            center: .center,
-                            angle: .degrees(phase * 540)
-                        ).opacity(0.7 * intensity),
-                        lineWidth: 3.0
-                    )
-                    .frame(width: size * 1.25, height: size * 1.25)
-                    .rotationEffect(.degrees(phase * 270))
-                    .shadow(color: Color(hue: hueRotate, saturation: 1.0, brightness: 0.7).opacity(0.4),
-                            radius: size * 0.1)
-                
-                // 主球体 — 全光谱渐变 + 呼吸
+                // 主球体 — Siri 风格有机变形
                 ZStack {
-                    // 底层 — 多色径向渐变
+                    // 底层渐变
                     Circle()
                         .fill(
-                            RadialGradient(
-                                colors: [
-                                    Color(hue: hueRotate, saturation: 0.9, brightness: 1.0),
-                                    Color(hue: hueRotate + 0.1, saturation: 1.0, brightness: 0.8),
-                                    Color(hue: hueRotate + 0.2, saturation: 0.9, brightness: 0.5),
-                                    Color(hue: hueRotate + 0.3, saturation: 0.8, brightness: 0.3),
-                                ],
-                                center: .topLeading,
-                                startRadius: 0,
-                                endRadius: size * 0.75
+                            EllipticalGradient(
+                                gradient: Gradient(stops: [
+                                    .init(color: Color(hue: phase.truncatingRemainder(dividingBy: 1), saturation: 0.5, brightness: 1.0), location: 0),
+                                    .init(color: Color(hue: (phase + 0.08).truncatingRemainder(dividingBy: 1), saturation: 0.6, brightness: 0.85), location: 0.3),
+                                    .init(color: Color(hue: (phase + 0.15).truncatingRemainder(dividingBy: 1), saturation: 0.7, brightness: 0.6), location: 0.6),
+                                    .init(color: Color(hue: (phase + 0.25).truncatingRemainder(dividingBy: 1), saturation: 0.8, brightness: 0.4), location: 1.0),
+                                ]),
+                                center: UnitPoint(x: 0.35 + 0.15 * sin(phase * 1.3), y: 0.35 + 0.15 * cos(phase * 1.5))
                             )
                         )
                     
-                    // 表层 — 互补色叠加
+                    // 虹彩表面层 — 模拟肥皂泡
                     Circle()
                         .fill(
                             AngularGradient(
-                                colors: [
-                                    Color(hue: hueRotate, saturation: 0.7, brightness: 1.0).opacity(0.3),
-                                    Color(hue: hueRotate + 0.3, saturation: 0.6, brightness: 0.9).opacity(0.3),
-                                    Color(hue: hueRotate + 0.6, saturation: 0.7, brightness: 1.0).opacity(0.3),
-                                ],
+                                gradient: Gradient(stops: [
+                                    .init(color: .white.opacity(0.12), location: 0),
+                                    .init(color: Color(hue: (phase + 0.1).truncatingRemainder(dividingBy: 1), saturation: 0.3, brightness: 1.0).opacity(0.1), location: 0.25),
+                                    .init(color: .white.opacity(0.08), location: 0.5),
+                                    .init(color: Color(hue: (phase + 0.6).truncatingRemainder(dividingBy: 1), saturation: 0.3, brightness: 1.0).opacity(0.1), location: 0.75),
+                                    .init(color: .white.opacity(0.12), location: 1.0),
+                                ]),
                                 center: .center,
-                                angle: .degrees(phase * 360)
+                                angle: .degrees(phase * 120)
                             )
                         )
                     
-                    // 高光
-                    Circle()
-                        .fill(.white.opacity(0.2))
-                        .frame(width: size * 0.35, height: size * 0.35)
-                        .offset(x: -size * 0.12, y: -size * 0.15)
-                        .blur(radius: size * 0.04)
+                    // 高光 — 左上
+                    Ellipse()
+                        .fill(
+                            RadialGradient(
+                                colors: [.white.opacity(0.4), .white.opacity(0.05), .clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: size * 0.25
+                            )
+                        )
+                        .frame(width: size * 0.4, height: size * 0.2)
+                        .offset(x: -size * 0.12, y: -size * 0.18)
+                        .rotationEffect(.degrees(15))
+                        .blur(radius: 2)
+                    
+                    // 次高光 — 右下
+                    Ellipse()
+                        .fill(.white.opacity(0.08))
+                        .frame(width: size * 0.25, height: size * 0.12)
+                        .offset(x: size * 0.1, y: size * 0.15)
+                        .blur(radius: 4)
                 }
                 .frame(width: size, height: size)
-                .scaleEffect(1 + 0.08 * intensity * sin(phase * 3.0))
-                .shadow(color: Color(hue: hueRotate, saturation: 1.0, brightness: 0.8).opacity(0.6 * intensity),
-                        radius: size * 0.3, x: 0, y: 0)
-                .shadow(color: Color(hue: hueRotate + 0.1, saturation: 1.0, brightness: 0.6).opacity(0.3 * intensity),
-                        radius: size * 0.15, x: 0, y: 0)
+                .scaleEffect(
+                    x: 1 + 0.04 * intensity * sin(phase * 2.5),
+                    y: 1 + 0.04 * intensity * cos(phase * 2.3)
+                )
+                .shadow(color: Color(hue: phase.truncatingRemainder(dividingBy: 1), saturation: 0.8, brightness: 0.7).opacity(0.4 * intensity),
+                        radius: size * 0.2, x: 0, y: 0)
             }
-            .frame(width: size * 2.0, height: size * 2.0)
+            .frame(width: size * 1.9, height: size * 1.9)
             .onReceive(timer) { _ in
-                let speed = intensity > 0.5 ? 0.012 : 0.004
-                withAnimation(.linear(duration: 0.04)) {
+                let speed = intensity > 0.5 ? 0.01 : 0.003
+                withAnimation(.linear(duration: 0.033)) {
                     phase += speed
-                    hueRotate = (hueRotate + speed * 0.5).truncatingRemainder(dividingBy: 1.0)
                 }
             }
         }
