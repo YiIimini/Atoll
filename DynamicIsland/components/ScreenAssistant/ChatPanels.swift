@@ -942,21 +942,28 @@ struct VoiceInputButton: View {
 
 struct SpeakButton: View {
     let text: String
+    @ObservedObject var voiceManager = VoiceConversationManager.shared
     @ObservedObject var screenAssistantManager = ScreenAssistantManager.shared
     
     var body: some View {
         Button(action: {
-            screenAssistantManager.speakText(text)
+            if voiceManager.isActive && Defaults[.voiceMode] == .continuous {
+                voiceManager.speakAndListen(text)
+            } else {
+                screenAssistantManager.speakText(text)
+            }
         }) {
-            Image(systemName: screenAssistantManager.isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
+            Image(systemName: voiceManager.isSpeaking || screenAssistantManager.isSpeaking
+                  ? "speaker.wave.3.fill" : "speaker.wave.2")
                 .font(.system(size: 13))
-                .foregroundColor(screenAssistantManager.isSpeaking ? .green : .secondary)
+                .foregroundColor(voiceManager.isSpeaking ? .green :
+                                 screenAssistantManager.isSpeaking ? .green : .secondary)
                 .padding(6)
                 .background(Color.gray.opacity(0.1))
                 .clipShape(Circle())
         }
         .buttonStyle(PlainButtonStyle())
-        .help(screenAssistantManager.isSpeaking ? "停止朗读" : "朗读回复")
+        .help(voiceManager.isSpeaking ? "停止朗读" : "朗读回复")
     }
 }
 

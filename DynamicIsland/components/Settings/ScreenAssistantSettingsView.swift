@@ -16,6 +16,9 @@ struct ScreenAssistantSettings: View {
     @Default(.selectedAIProvider) var selectedAIProvider
     @Default(.selectedAIModel) var selectedAIModel
     @Default(.enableThinkingMode) var enableThinkingMode
+    @Default(.speechProvider) var speechProvider
+    @Default(.speechApiKey) var speechApiKey
+    @Default(.voiceMode) var voiceMode
     @Default(.localModelEndpoint) var localModelEndpoint
 
     // Per-provider API keys
@@ -141,6 +144,45 @@ struct ScreenAssistantSettings: View {
                     Text("Default Ollama API endpoint. Change if your local LLM server runs on a different address.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+            }
+
+            // MARK: - 语音设置
+            Section {
+                Picker("语音识别引擎", selection: $speechProvider) {
+                    ForEach(SpeechProvider.allCases) { provider in
+                        Text(provider.rawValue).tag(provider)
+                    }
+                }
+                .settingsHighlight(id: highlightID("Speech Provider"))
+
+                if speechProvider.needsApiKey {
+                    HStack {
+                        Text("API Key")
+                        Spacer()
+                        SecureField("输入 API Key", text: $speechApiKey)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 200)
+                    }
+                    .settingsHighlight(id: highlightID("Speech API Key"))
+                }
+
+                Picker("对话模式", selection: $voiceMode) {
+                    ForEach(VoiceMode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .settingsHighlight(id: highlightID("Voice Mode"))
+            } header: {
+                Text("语音对话")
+            } footer: {
+                if speechProvider == .system {
+                    Text("使用 macOS 内置语音识别，无需额外配置。\n「实时对话」模式下，说话会自动转为文字并在停顿 1.5 秒后自动发送，AI 回复会自动朗读。")
+                        .foregroundStyle(.secondary).font(.caption)
+                } else if speechProvider == .openaiWhisper {
+                    Text("使用 OpenAI Whisper API 进行语音识别。需填写 API Key（与 ChatGPT Key 相同）。\n实时对话模式使用流式上传，每 3 秒识别一次。")
+                        .foregroundStyle(.secondary).font(.caption)
                 }
             }
 
