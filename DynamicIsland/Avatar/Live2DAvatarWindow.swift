@@ -4,7 +4,7 @@ import WebKit
 
 // MARK: - Live2D 透明悬浮窗
 
-final class Live2DAvatarWindow: NSWindow {
+final class Live2DAvatarWindow: NSWindow, WKNavigationDelegate {
     private var webView: WKWebView?
     private var bridge: Live2DBridge?
     var onTap: (() -> Void)?
@@ -42,6 +42,7 @@ final class Live2DAvatarWindow: NSWindow {
         
         contentView = wv
         webView = wv
+        wv.navigationDelegate = self
 
         wv.loadHTMLString(live2dHTML, baseURL: nil)
 
@@ -49,6 +50,20 @@ final class Live2DAvatarWindow: NSWindow {
         var frame = self.frame
         frame.origin.y -= 120
         setFrame(frame, display: true)
+    }
+
+    // MARK: - WKNavigationDelegate
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        print("❌ Live2D WebView load failed: \(error.localizedDescription)")
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        print("❌ Live2D WebView navigation failed: \(error.localizedDescription)")
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        print("✅ Live2D WebView did finish loading")
     }
 
     func sendToJS(_ dict: [String: Any]) {
