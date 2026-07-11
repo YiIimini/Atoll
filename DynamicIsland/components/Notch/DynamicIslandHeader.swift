@@ -216,6 +216,23 @@ struct DynamicIslandHeader: View {
                     .buttonStyle(PlainButtonStyle())
                     .help("系统清理")
 
+                    // Live2D Avatar button
+                    Button(action: {
+                        AvatarManager.shared.toggle()
+                    }) {
+                        Capsule()
+                            .fill(.black)
+                            .frame(width: 30, height: 30)
+                            .overlay {
+                                Image(systemName: "person.crop.circle")
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .imageScale(.medium)
+                            }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .help("AI 虚拟人")
+
                     if Defaults[.settingsIconInNotch] {
                         Button(action: {
                             SettingsWindowController.shared.showWindow()

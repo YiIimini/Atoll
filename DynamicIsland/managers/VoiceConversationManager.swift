@@ -133,12 +133,14 @@ final class VoiceConversationManager: NSObject, ObservableObject, AVAudioRecorde
         onSendHandler = onSend
         isActive = true
         liveText = ""
+        AvatarManager.shared.show()
         resolveProvider()
     }
 
     /// 停止对话模式
     func stopConversation() {
         isActive = false
+        AvatarManager.shared.hide()
         recognitionTask?.cancel()
         audioEngine?.stop()
         audioEngine = nil

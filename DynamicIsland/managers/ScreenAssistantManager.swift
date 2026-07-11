@@ -1461,6 +1461,12 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         print("💬 ScreenAssistant: Adding assistant message: \(content.prefix(100))...")
         let assistantMessage = ChatMessage(content: content, isFromUser: false)
         chatMessages.append(assistantMessage)
+        
+        // 驱动虚拟人表情
+        Task { @MainActor in
+            let emotion = AvatarManager.shared.emotionFromText(content)
+            AvatarManager.shared.setEmotion(emotion)
+        }
     }
     
     private func handleAPIError(statusCode: Int, provider: AIModelProvider) {

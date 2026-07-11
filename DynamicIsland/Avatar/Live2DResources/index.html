@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; background:transparent; }
+#app { width:100%; height:100%; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- PixiJS + pixi-live2d-display (MIT License) -->
+<script src="https://cdn.jsdelivr.net/npm/pixi.js@7/dist/pixi.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.5.0/dist/index.min.js"></script>
+
+<script>
+// ========== Atoll Live2D Bridge ==========
+const BRIDGE = {
+    app: null,
+    model: null,
+    currentExpression: 'neutral',
+    mouthOpen: 0,
+
+    async init(modelUrl) {
+        const container = document.getElementById('app');
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+
+        this.app = new PIXI.Application({
+            view: document.createElement('canvas'),
+            width: w,
+            height: h,
+            backgroundAlpha: 0,
+            antialias: true,
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true
+        });
+        container.appendChild(this.app.view);
+        this.app.view.style.width = '100%';
+        this.app.view.style.height = '100%';
+
+        const defaultModel = 'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display@master/assets/haru/haru_greeter_t03.model3.json';
+        const url = modelUrl || defaultModel;
+
+        try {
+            this.model = await PIXI.live2d.Live2DModel.from(url);
+            this.model.scale.set(0.25);
+            this.model.x = w / 2;
+            this.model.y = h * 0.55;
+            this.model.anchor.set(0.5, 0.5);
+            this.app.stage.addChild(this.model);
+            
+            // 默认表情
+            if (this.model.internalModel && this.model.internalModel.motionManager) {
+                const mgr = this.model.internalModel.motionManager;
+                if (mgr.expressionManager) {
+                    mgr.expressionManager.setExpression('neutral');
+                }
+            }
+            
+            console.log('✅ Live2D model loaded');
+            return true;
+        } catch(e) {
+            console.error('Live2D load error:', e);
+            return false;
+        }
+    },
+
+    setExpression(name) {
+        this.currentExpression = name;
+        if (this.model && this.model.internalModel) {
+            const mgr = this.model.internalModel.motionManager;
+            if (mgr && mgr.expressionManager) {
+                try { mgr.expressionManager.setExpression(name); } catch(e) {}
+            }
+        }
+    },
+
+    setMouthOpen(ratio) {
+        this.mouthOpen = Math.max(0, Math.min(1, ratio));
+        if (this.model && this.model.internalModel) {
+            const coreModel = this.model.internalModel.coreModel;
+            if (coreModel) {
+                try {
+                    coreModel.setParameterValueById('ParamMouthOpenY', this.mouthOpen);
+                } catch(e) {}
+            }
+        }
+    },
+
+    playMotion(name) {
+        if (this.model) {
+            try { this.model.motion(name); } catch(e) {}
+        }
+    },
+
+    setScale(s) {
+        if (this.model) {
+            this.model.scale.set(s);
+        }
+    }
+};
+
+// ========== Swift ↔ JS ==========
+window.addEventListener('message', async (event) => {
+    const msg = event.data;
+    if (!msg || !msg.type) return;
+    
+    switch(msg.type) {
+        case 'init':
+            const ok = await BRIDGE.init(msg.modelUrl);
+            if (window.webkit && window.webkit.messageHandlers.atoll) {
+                window.webkit.messageHandlers.atoll.postMessage({ type:'ready', success:ok });
+            }
+            break;
+        case 'expression':
+            BRIDGE.setExpression(msg.name);
+            break;
+        case 'mouthOpen':
+            BRIDGE.setMouthOpen(msg.ratio);
+            break;
+        case 'motion':
+            BRIDGE.playMotion(msg.name);
+            break;
+        case 'scale':
+            BRIDGE.setScale(msg.s || 1.0);
+            break;
+    }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+    if (window.webkit && window.webkit.messageHandlers.atoll) {
+        window.webkit.messageHandlers.atoll.postMessage({ type:'pageReady' });
+    }
+});
+
+document.addEventListener('click', () => {
+    if (window.webkit && window.webkit.messageHandlers.atoll) {
+        window.webkit.messageHandlers.atoll.postMessage({ type:'tap' });
+    }
+});
+</script>
+</body>
+</html>
